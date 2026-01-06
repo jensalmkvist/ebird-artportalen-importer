@@ -1,6 +1,6 @@
 -- KeyValueMapper.lua
--- Standalone JSON-backed mapper: csv_key -> excel_value
--- Requires: dkjson (pure Lua JSON). Install via: luarocks install dkjson
+-- JSON-backed mapper: csv_key -> value (string or table)
+-- Requires: dkjson
 
 -- Prefer LuaRocks if available; fall back to project-local vendor
 local ok_loader = pcall(require, 'luarocks.loader')
@@ -16,7 +16,6 @@ KeyValueMapper.__index = KeyValueMapper
 -- --- helpers -----------------------------------------------------
 
 local function norm_str(s)
-  -- Normalize inputs to trimmed strings
   s = tostring(s or '')
   s = s:gsub('^%s+', ''):gsub('%s+$', '')
   return s
@@ -70,13 +69,30 @@ end
 -- --- constructor -------------------------------------------------
 
 --- Create a new mapper backed by a JSON file.
--- @param mapping_path string: path to JSON file (object with string keys/values)
--- @return KeyValueMapper
-function KeyValueMapper.new(mapping_path)
+-- @param mapping_path string
+-- @param opts table|nil  (e.g., { value_key_for_reverse = 'lokalnamn' })
+function KeyValueMapper.new(mapping_path, opts)
   local self = setmetatable({}, KeyValueMapper)
   self.mapping_path = assert(mapping_path, 'mapping_path is required')
-  self.map = {} -- csv_location -> excel_location
-  self.reverse = {} -- excel_location -> csv_location (for uniqueness check)
+  self.value_key_for_reverse = opts and opts.value_key_for_reverse or nil
+  self.map = {} -- csv_key -> value (string or table)
+  self.reverse = {} -- reverse_key -> csv_key (if enabled)
+  self._migrated = false
+
+  local function extract_reverse_key(v)
+    if type(v) == 'table' then
+      if not self.value_key_for_reverse then
+        return nil
+      end
+      local kk = norm_str(v[self.value_key_for_reverse] or '')
+      return kk ~= '' and kk or nil
+    elseif type(v) == 'string' then
+      local kk = norm_str(v)
+      return kk ~= '' and kk or nil
+    end
+    return nil
+  end
+  self._extract_reverse_key = extract_reverse_key
 
   if file_exists(mapping_path) then
     local content, rerr = read_all(mapping_path)
@@ -85,23 +101,35 @@ function KeyValueMapper.new(mapping_path)
     end
     local decoded, _, derr = dkjson.decode(content)
     if not decoded or type(decoded) ~= 'table' then
-      -- Backup corrupt file and start fresh
       local backup = mapping_path .. '.corrupt'
       os.rename(mapping_path, backup)
       io.stderr:write('Invalid JSON. Backed up to: ' .. backup .. '\n')
       decoded = {}
     end
-    -- normalize & build both maps
+
     for k, v in pairs(decoded) do
       local ck = norm_str(k)
-      local ev = norm_str(v)
-      if ck ~= '' and ev ~= '' then
-        self.map[ck] = ev
-        self.reverse[ev] = ck
+      local val = v
+      -- auto-migrate string -> table if we enforce a field for reverse
+      if type(v) == 'string' and self.value_key_for_reverse then
+        val = { [self.value_key_for_reverse] = norm_str(v) }
+        self._migrated = true
+      end
+      if ck ~= '' and val ~= nil then
+        self.map[ck] = val
+        local rk = extract_reverse_key(val)
+        if rk then
+          self.reverse[rk] = ck
+        end
       end
     end
   else
     -- Create an empty file on first save
+    self:save()
+  end
+
+  if self._migrated then
+    -- Persist migration of existing entries to objects
     self:save()
   end
 
@@ -110,70 +138,115 @@ end
 
 -- --- API ---------------------------------------------------------
 
---- Get mapped Excel location by CSV location.
--- @param csv_location string
--- @return string|nil
-function KeyValueMapper:get(csv_location)
-  csv_location = norm_str(csv_location)
-  if csv_location == '' then
+--- Get mapped value by key (string or table).
+function KeyValueMapper:get(csv_key)
+  csv_key = norm_str(csv_key)
+  if csv_key == '' then
     return nil
   end
-  return self.map[csv_location]
+  return self.map[csv_key]
 end
 
---- Check if a CSV location key exists.
-function KeyValueMapper:exists_key(csv_location)
-  csv_location = norm_str(csv_location)
-  return self.map[csv_location] ~= nil
+--- Check if a key exists.
+function KeyValueMapper:exists_key(csv_key)
+  csv_key = norm_str(csv_key)
+  return self.map[csv_key] ~= nil
 end
 
---- Check if an Excel location value exists (used by some other CSV key).
-function KeyValueMapper:exists_value(excel_location)
-  excel_location = norm_str(excel_location)
-  return self.reverse[excel_location] ~= nil
+--- Check if a reverse value exists (string key used for reverse uniqueness).
+-- For string values: pass the value.
+-- For table values: pass the configured field value (e.g., lokalnamn).
+function KeyValueMapper:exists_value(value_key)
+  local k = norm_str(value_key)
+  return self.reverse[k] ~= nil
 end
 
---- Add a new mapping. Enforces uniqueness for both key and value.
--- @param csv_location string
--- @param excel_location string
--- @return true | nil, err
-function KeyValueMapper:add(csv_location, excel_location)
-  csv_location = norm_str(csv_location)
-  excel_location = norm_str(excel_location)
-
-  if csv_location == '' then
-    return nil, 'csv_location is empty'
+--- Add a new mapping. Enforces:
+--   - unique key (csv_key)
+--   - if applicable, unique reverse key (string value or table[field])
+function KeyValueMapper:add(csv_key, value)
+  csv_key = norm_str(csv_key)
+  if csv_key == '' then
+    return nil, 'csv_key is empty'
   end
-  if excel_location == '' then
-    return nil, 'excel_location is empty'
+  if value == nil then
+    return nil, 'value is nil'
   end
 
-  if self.map[csv_location] ~= nil then
-    return nil, ("csv_location already exists: '%s'"):format(csv_location)
-  end
-  if self.reverse[excel_location] ~= nil then
-    return nil,
-      ("excel_location already in use by csv '%s'"):format(
-        self.reverse[excel_location]
-      )
+  if self.map[csv_key] ~= nil then
+    return nil, ("csv_key already exists: '%s'"):format(csv_key)
   end
 
-  self.map[csv_location] = excel_location
-  self.reverse[excel_location] = csv_location
+  local rk = self._extract_reverse_key(value)
+  if rk and self.reverse[rk] and self.reverse[rk] ~= csv_key then
+    return nil, ("value already in use by csv '%s'"):format(self.reverse[rk])
+  end
+
+  self.map[csv_key] = value
+  if rk then
+    self.reverse[rk] = csv_key
+  end
 
   local ok, err = self:save()
   if not ok then
-    -- Roll back in-memory if save fails
-    self.reverse[excel_location] = nil
-    self.map[csv_location] = nil
+    if rk then
+      self.reverse[rk] = nil
+    end
+    self.map[csv_key] = nil
     return nil, err
   end
 
   return true
 end
 
---- Persist to JSON file (atomic write).
--- @return true | nil, err
+--- Set/replace a mapping (upsert). Updates reverse safely.
+function KeyValueMapper:set(csv_key, value)
+  csv_key = norm_str(csv_key)
+  if csv_key == '' then
+    return nil, 'csv_key is empty'
+  end
+  if value == nil then
+    return nil, 'value is nil'
+  end
+
+  local old = self.map[csv_key]
+  local old_rk = old and self._extract_reverse_key(old) or nil
+  local new_rk = self._extract_reverse_key(value)
+
+  if new_rk and self.reverse[new_rk] and self.reverse[new_rk] ~= csv_key then
+    return nil,
+      ("value already in use by csv '%s'"):format(self.reverse[new_rk])
+  end
+
+  if old_rk then
+    self.reverse[old_rk] = nil
+  end
+  self.map[csv_key] = value
+  if new_rk then
+    self.reverse[new_rk] = csv_key
+  end
+
+  local ok, err = self:save()
+  if not ok then
+    -- best-effort rollback
+    if new_rk then
+      self.reverse[new_rk] = nil
+    end
+    if old then
+      self.map[csv_key] = old
+      if old_rk then
+        self.reverse[old_rk] = csv_key
+      end
+    else
+      self.map[csv_key] = nil
+    end
+    return nil, err
+  end
+
+  return true
+end
+
+--- Persist to JSON file.
 function KeyValueMapper:save()
   local ordered = sorted_copy(self.map)
   local content = dkjson.encode(ordered, { indent = true })

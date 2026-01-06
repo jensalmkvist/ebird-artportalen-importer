@@ -370,8 +370,9 @@ local function main()
   end
 
   -- Mappers
-  local species_mapper = Mapper.new 'species_map.json' -- Species -> Artnamn
-  local location_mapper = Mapper.new 'mappings.json' -- Location -> Lokalnamn
+  local species_mapper = Mapper.new 'species_map.json' -- Species -> Artnamn (string)
+  local location_mapper =
+    Mapper.new('mappings.json', { value_key_for_reverse = 'lokalnamn' }) -- Location -> {lokalnamn, huvudlokal}
 
   -- Stats
   local used_s, added_s = 0, 0
@@ -383,6 +384,7 @@ local function main()
     'Artnamn',
     'Antal',
     'Lokalnamn',
+    'Huvudlokal',
     'Startdatum',
     'Starttid',
     'Slutdatum',
@@ -474,29 +476,48 @@ local function main()
           end
         end
 
-        -- Location -> Lokalnamn
-        local lokal = location ~= '' and location_mapper:get(location) or nil
-        if not lokal and location ~= '' then
+        -- Location -> {lokalnamn, huvudlokal}
+        local loc_obj = location ~= '' and location_mapper:get(location) or nil
+
+        if not loc_obj and location ~= '' then
           io.write(
             ("No mapping for location '%s'. Enter Lokalnamn (blank to skip): "):format(
               location
             )
           )
-          local val = trim(io.read '*l' or '')
-          if val ~= '' then
-            local ok, err = location_mapper:add(location, val)
+          local ln = trim(io.read '*l' or '')
+          io.write(
+            ("Enter Huvudlokal for '%s' (blank to skip): "):format(location)
+          )
+          local hl = trim(io.read '*l' or '')
+          if ln ~= '' or hl ~= '' then
+            local ok, err =
+              location_mapper:add(location, { lokalnamn = ln, huvudlokal = hl })
             if ok then
-              lokal = val
+              loc_obj = { lokalnamn = ln, huvudlokal = hl }
               added_l = added_l + 1
             else
-              io.stderr:write('Location add failed: ' .. err .. '\n')
+              io.stderr:write('Location add failed: ' .. tostring(err) .. '\n')
             end
           end
         else
-          if lokal then
+          if loc_obj then
+            -- Backward-compat: if old mappings.json had a plain string, migrate it.
+            if type(loc_obj) == 'string' then
+              loc_obj = { lokalnamn = loc_obj, huvudlokal = '' }
+              local ok, err = location_mapper:set(location, loc_obj)
+              if not ok then
+                io.stderr:write(
+                  'Location migrate failed: ' .. tostring(err) .. '\n'
+                )
+              end
+            end
             used_l = used_l + 1
           end
         end
+
+        local lokal = (loc_obj and loc_obj.lokalnamn) or ''
+        local huvudlokal = (loc_obj and loc_obj.huvudlokal) or ''
 
         -- Time math
         local mins = parse_duration_to_minutes(duration)
@@ -510,6 +531,7 @@ local function main()
           art or '',
           count or '',
           lokal or '',
+          huvudlokal or '',
           startdate or '',
           starttime or '',
           slutdatum or '',
@@ -542,7 +564,7 @@ local function main()
     )
   )
   print(('Wrote output CSV: %s'):format(output))
-  print 'Columns: Artnamn, Antal, Lokalnamn, Startdatum, Starttid, Slutdatum, Sluttid'
+  print 'Columns: Artnamn, Antal, Lokalnamn, Huvudlokal, Startdatum, Starttid, Slutdatum, Sluttid'
 end
 
 main()
