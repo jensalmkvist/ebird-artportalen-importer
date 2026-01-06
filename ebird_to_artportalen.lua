@@ -21,7 +21,7 @@
 -- package.path = package.path .. ";./vendor/?.lua;./vendor/?/init.lua"
 
 -- Toggle this to enable/disable debug logs
-local DEBUG = true
+local DEBUG = false
 
 local function dprintf(fmt, ...)
   if DEBUG then

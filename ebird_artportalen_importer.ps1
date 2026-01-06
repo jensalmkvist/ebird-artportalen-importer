@@ -2,3 +2,4 @@
 
 chcp 65001 >$null
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()
+lua .\ebird_to_artportalen.lua 'C:\Projects\Personal\ebird-artportalen-importer\Import files/' .\out_for_excel.csv
