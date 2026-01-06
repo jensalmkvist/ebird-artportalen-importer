@@ -1,5 +1,5 @@
--- LocationMapper.lua
--- Standalone JSON-backed mapper: csv_location -> excel_location
+-- KeyValueMapper.lua
+-- Standalone JSON-backed mapper: csv_key -> excel_value
 -- Requires: dkjson (pure Lua JSON). Install via: luarocks install dkjson
 
 -- Prefer LuaRocks if available; fall back to project-local vendor
@@ -10,8 +10,8 @@ end
 
 local dkjson = require 'dkjson'
 
-local LocationMapper = {}
-LocationMapper.__index = LocationMapper
+local KeyValueMapper = {}
+KeyValueMapper.__index = KeyValueMapper
 
 -- --- helpers -----------------------------------------------------
 
@@ -71,9 +71,9 @@ end
 
 --- Create a new mapper backed by a JSON file.
 -- @param mapping_path string: path to JSON file (object with string keys/values)
--- @return LocationMapper
-function LocationMapper.new(mapping_path)
-  local self = setmetatable({}, LocationMapper)
+-- @return KeyValueMapper
+function KeyValueMapper.new(mapping_path)
+  local self = setmetatable({}, KeyValueMapper)
   self.mapping_path = assert(mapping_path, 'mapping_path is required')
   self.map = {} -- csv_location -> excel_location
   self.reverse = {} -- excel_location -> csv_location (for uniqueness check)
@@ -113,7 +113,7 @@ end
 --- Get mapped Excel location by CSV location.
 -- @param csv_location string
 -- @return string|nil
-function LocationMapper:get(csv_location)
+function KeyValueMapper:get(csv_location)
   csv_location = norm_str(csv_location)
   if csv_location == '' then
     return nil
@@ -122,13 +122,13 @@ function LocationMapper:get(csv_location)
 end
 
 --- Check if a CSV location key exists.
-function LocationMapper:exists_key(csv_location)
+function KeyValueMapper:exists_key(csv_location)
   csv_location = norm_str(csv_location)
   return self.map[csv_location] ~= nil
 end
 
 --- Check if an Excel location value exists (used by some other CSV key).
-function LocationMapper:exists_value(excel_location)
+function KeyValueMapper:exists_value(excel_location)
   excel_location = norm_str(excel_location)
   return self.reverse[excel_location] ~= nil
 end
@@ -137,7 +137,7 @@ end
 -- @param csv_location string
 -- @param excel_location string
 -- @return true | nil, err
-function LocationMapper:add(csv_location, excel_location)
+function KeyValueMapper:add(csv_location, excel_location)
   csv_location = norm_str(csv_location)
   excel_location = norm_str(excel_location)
 
@@ -174,7 +174,7 @@ end
 
 --- Persist to JSON file (atomic write).
 -- @return true | nil, err
-function LocationMapper:save()
+function KeyValueMapper:save()
   local ordered = sorted_copy(self.map)
   local content = dkjson.encode(ordered, { indent = true })
   local ok, err = write_file(self.mapping_path, content)
@@ -184,4 +184,4 @@ function LocationMapper:save()
   return true
 end
 
-return LocationMapper
+return KeyValueMapper
