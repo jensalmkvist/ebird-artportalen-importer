@@ -141,6 +141,32 @@ local function to_24h_time(s)
   return s
 end
 
+-- Convert "Jun 18, 2024" -> "2024-06-18"
+local function normalize_date_mmddyyyy(s)
+  local mon, day, year = s:match '^(%a+)%s+(%d%d?),%s*(%d%d%d%d)$'
+  if not (mon and day and year) then
+    return s -- return unchanged if pattern doesn't match
+  end
+
+  local months = {
+    Jan = '01',
+    Feb = '02',
+    Mar = '03',
+    Apr = '04',
+    May = '05',
+    Jun = '06',
+    Jul = '07',
+    Aug = '08',
+    Sep = '09',
+    Oct = '10',
+    Nov = '11',
+    Dec = '12',
+  }
+
+  local mm = months[mon:sub(1, 3)]
+  return string.format('%s-%s-%02d', year, mm, tonumber(day))
+end
+
 -- Robust CSV parser for one line: handles quotes, commas, escaped quotes ("")
 local function parse_csv_line(line)
   local res = {}
@@ -415,6 +441,7 @@ local function main()
         local count = trim(f[iCount] or '')
         local location = trim(f[iLocation] or '')
         local startdate = trim(f[iDate] or '')
+        startdate = normalize_date_mmddyyyy(startdate)
         local starttime = trim(f[iStart] or '')
         local duration = trim(f[iDur] or '')
 
