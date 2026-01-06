@@ -296,6 +296,36 @@ local function parse_duration_to_minutes(s)
   return total
 end
 
+-- Copy UTF‑8 text to Windows clipboard using PowerShell (works with å/ä/ö)
+local function copy_to_clipboard_utf8(text)
+  local tmp = os.tmpname() .. '.txt'
+  local f = assert(io.open(tmp, 'wb'))
+  f:write(text) -- write UTF-8 bytes
+  f:close()
+  local cmd = ([[powershell -NoProfile -Command "Get-Content -LiteralPath '%s' -Raw -Encoding UTF8 | Set-Clipboard"]]):format(
+    tmp:gsub("'", "''")
+  )
+  os.execute(cmd)
+  os.remove(tmp)
+end
+
+-- Read a CSV file and return a single TSV blob (header + rows), using parse_csv_line()
+local function csv_file_to_tsv_blob(csv_path)
+  local fin = assert(
+    io.open(csv_path, 'r'),
+    'Cannot open output CSV to convert: ' .. csv_path
+  )
+  local lines = {}
+  for line in fin:lines() do
+    -- Parse CSV line (handles quoted fields / commas / escaped quotes)
+    local fields = parse_csv_line(line or '')
+    -- Join with tabs
+    lines[#lines + 1] = table.concat(fields, '\t')
+  end
+  fin:close()
+  return table.concat(lines, '\n')
+end
+
 -- -------- Main --------
 
 local function main()
@@ -466,6 +496,11 @@ local function main()
   end
 
   fout:close()
+
+  -- Convert the just-written output.csv to TSV and copy to clipboard (includes header)
+  local tsv_blob = csv_file_to_tsv_blob(output)
+  copy_to_clipboard_utf8(tsv_blob)
+  print 'Copied tab-separated output (including header) to clipboard.'
 
   print(
     ('Species mappings used: %d, added: %d (species_map.json)'):format(
