@@ -1,50 +1,102 @@
 {
   "Kusö kalv":{
-    "huvudlokal":"",
-    "lokalnamn":"Kusö kalv"
-  },
-  "Härna Ryttaregård":{
-    "huvudlokal":"",
-    "lokalnamn":"Härna Ryttaregård"
-  },
-  "Isbladskärret":{
-    "huvudlokal":"Södra Djurgården",
-    "lokalnamn":"Isbladskärret"
-  },
-  "Svartåmynningens naturreservat--Nybro":{
-    "huvudlokal":"Svartåmynningens naturreservat",
-    "lokalnamn":"Nybro"
+    "lokalnamn":"Kusö kalv",
+    "huvudlokal":""
   },
   "Svartåmynningens naturreservat--Sättunaviken":{
-    "huvudlokal":"Svartåmynningens naturreservat",
-    "lokalnamn":"Sättunaviken"
+    "lokalnamn":"Sättunaviken",
+    "huvudlokal":"Svartåmynningens naturreservat"
+  },
+  "Växjosjön":{
+    "lokalnamn":"Växjösjön",
+    "huvudlokal":""
+  },
+  "Pumphusängen, Ågesta":{
+    "huvudlokal":"Ågesta",
+    "lokalnamn":"Pumphusängen"
   },
   "Tanto (Årstabroarnas norra fäste)":{
-    "huvudlokal":"Södermalm",
-    "lokalnamn":"Årstabrons N Fäste"
+    "lokalnamn":"Årstabrons N Fäste",
+    "huvudlokal":"Södermalm"
   },
-  "Årsta gård":{
-    "huvudlokal":"Årsta",
-    "lokalnamn":"Årsta gård"
-  },
-  "Gröndals båtklubb":{
-    "huvudlokal":"Gröndal",
-    "lokalnamn":"Gröndalshamnen"
-  },
-  "Auto selected 59.29565, 18.05737":{
-    "huvudlokal":"Årsta",
-    "lokalnamn":"Borensstråket"
+  "Auto selected 59.40382, 17.96211":{
+    "lokalnamn":"E4/Kymlingelänken",
+    "huvudlokal":"Södra Järvafältet"
   },
   "Hyllie stationstorg":{
-    "huvudlokal":"",
-    "lokalnamn":"Hyllie Arena, Malmö"
+    "lokalnamn":"Hyllie Arena, Malmö",
+    "huvudlokal":""
   },
-  "Bråviksvägen":{
+  "Lillsjön":{
+    "lokalnamn":"Lillsjön",
+    "huvudlokal":"Bromma"
+  },
+  "Lantmannavägen 4, Växjö SE-G (56.8681,14.8354)":{
+    "huvudlokal":"",
+    "lokalnamn":"Sandviksverket VEAB"
+  },
+  "Årsta gård":{
+    "lokalnamn":"Årsta gård",
+    "huvudlokal":"Årsta"
+  },
+  "Ågesta":{
+    "huvudlokal":"Ågesta",
+    "lokalnamn":"Ågestasjön"
+  },
+  "Växjö Domkyrka":{
+    "lokalnamn":"Linnéparken",
+    "huvudlokal":"Växjö"
+  },
+  "Angarnssjöängens NR":{
+    "huvudlokal":"",
+    "lokalnamn":"Angarnssjöängen"
+  },
+  "Valla Torg, Årsta":{
     "huvudlokal":"Årsta",
-    "lokalnamn":"Bråviksvägen"
+    "lokalnamn":"Valla Torg"
+  },
+  "Isbladskärret":{
+    "lokalnamn":"Isbladskärret",
+    "huvudlokal":"Södra Djurgården"
+  },
+  "Svartåmynningens naturreservat--Nybro":{
+    "lokalnamn":"Nybro",
+    "huvudlokal":"Svartåmynningens naturreservat"
+  },
+  "Storgatan 40, Växjö SE-G (56.8792,14.7996)":{
+    "lokalnamn":"Växjö centrum",
+    "huvudlokal":"Växjö"
   },
   "Gåsholma":{
-    "huvudlokal":"Gåsholma-omr.",
-    "lokalnamn":"Gåsholma"
+    "lokalnamn":"Gåsholma",
+    "huvudlokal":"Gåsholma-omr."
+  },
+  "Höganloft 2, Tranås SE-F (58.0325,14.9530)":{
+    "huvudlokal":"",
+    "lokalnamn":"Höganloft rastplats"
+  },
+  "Bråviksvägen":{
+    "lokalnamn":"Bråviksvägen",
+    "huvudlokal":"Årsta"
+  },
+  "Ekbacksvägen 28, Bromma SE-AB 59.34542, 17.96500":{
+    "huvudlokal":"Bromma",
+    "lokalnamn":"Ulvsunda"
+  },
+  "Härna Ryttaregård":{
+    "lokalnamn":"Härna Ryttaregård",
+    "huvudlokal":""
+  },
+  "Gröndals båtklubb":{
+    "lokalnamn":"Gröndalshamnen",
+    "huvudlokal":"Gröndal"
+  },
+  "Riddersholm, Rådmansö":{
+    "huvudlokal":"",
+    "lokalnamn":"Riddersholm med omnejd, Rådmansö"
+  },
+  "Auto selected 59.29565, 18.05737":{
+    "lokalnamn":"Borensstråket",
+    "huvudlokal":"Årsta"
   }
 }
