@@ -1,102 +1,642 @@
 {
-  "Kusö kalv":{
-    "lokalnamn":"Kusö kalv",
+  "Hornborgasjön--Utloppet":{
+    "lokalnamn":"Utloppet",
+    "huvudlokal":"Hornborgasjön"
+  },
+  "Trollskogen":{
+    "lokalnamn":"Trollskogen",
+    "huvudlokal":"Ölands norra udde"
+  },
+  "Årstaskogen":{
+    "lokalnamn":"Årstaskogen",
+    "huvudlokal":"Årsta"
+  },
+  "Saltsjön":{
+    "lokalnamn":"Täcka udden",
+    "huvudlokal":"Södra Djurgården"
+  },
+  "Fulufjällets NP--Njupeskär":{
+    "lokalnamn":"Njupeskär",
+    "huvudlokal":"Fulufjället"
+  },
+  "Länsväg T 771, Grythyttan SE-Örebro län 59.63403, 14.76846":{
+    "lokalnamn":"Gungbromossen",
+    "huvudlokal":"Grythyttans sn"
+  },
+  "Käringboda Naturreservat":{
+    "lokalnamn":"Käringboda",
+    "huvudlokal":"Järflottaland"
+  },
+  "Sätraskogen, Skärholmen SE-Stockholms län 59.28358, 17.88109":{
+    "lokalnamn":"Skärholmshamnen",
+    "huvudlokal":""
+  },
+  "Ottenby--södra udde":{
+    "lokalnamn":"Ölands södra udde",
+    "huvudlokal":"Ottenby"
+  },
+  "Kvarnberget, Hjälstaviken":{
+    "lokalnamn":"Kvarnberget",
+    "huvudlokal":"Hjälstaviken"
+  },
+  "Västeräng, Ågesta":{
+    "lokalnamn":"Västeräng",
+    "huvudlokal":"Ågesta"
+  },
+  "Hammarö":{
+    "lokalnamn":"Fyrholmen",
+    "huvudlokal":"Hammarö sydspets"
+  },
+  "Tappströmsvägen 90, Ekerö SE-AB 59.29304, 17.80238":{
+    "lokalnamn":"Tappströmsbron",
+    "huvudlokal":"Tappström"
+  },
+  "Tyvuddens NR":{
+    "lokalnamn":"Tyvuddens naturreservat",
+    "huvudlokal":""
+  },
+  "Trädgårds Föreningen":{
+    "lokalnamn":"Trädgårdsföreningen, Göteborg",
+    "huvudlokal":""
+  },
+  "387 71, Löttorp SE-Kalmar län 57.11634, 17.00449":{
+    "lokalnamn":"Nybyorde",
+    "huvudlokal":""
+  },
+  "Strömstad":{
+    "lokalnamn":"Norra hamnen",
+    "huvudlokal":"Strömstad"
+  },
+  "Pålsundet":{
+    "lokalnamn":"Pålsundet",
+    "huvudlokal":"Långholmen"
+  },
+  "Hanveden, Tungelsta SE-Stockholms län 59.14390, 18.03539":{
+    "lokalnamn":"Långsjön",
+    "huvudlokal":"Hanveden"
+  },
+  "Angarnssjöängens NR":{
+    "lokalnamn":"Angarnssjöängen",
+    "huvudlokal":""
+  },
+  "Färnebofjärdens National Park, Österfärnebo SE-Gävleborgs län 60.25156, 16.80394":{
+    "lokalnamn":"Ista",
+    "huvudlokal":"Österfärnebo"
+  },
+  "Hornborgasjön, Axvall SE-Västra Götalands län 58.34439, 13.60007":{
+    "lokalnamn":"Fäholmen",
+    "huvudlokal":"Hornborgasjön"
+  },
+  "Anna Rydstedts Stig":{
+    "lokalnamn":"Ventlinge strand",
+    "huvudlokal":""
+  },
+  "Bjärby badplats":{
+    "lokalnamn":"Bjärby badplats",
+    "huvudlokal":"Bjärby"
+  },
+  "Stenstrand":{
+    "lokalnamn":"Stenstrand",
+    "huvudlokal":"Torö"
+  },
+  "Isbladsmatningen":{
+    "lokalnamn":"Isbladsmatningen",
+    "huvudlokal":"Södra Djurgården"
+  },
+  "Sandemar, Dalarö SE-AB 59.11952, 18.34315":{
+    "lokalnamn":"Höggarn",
+    "huvudlokal":"Sandemar"
+  },
+  "Auto selected 59.29565, 18.05737":{
+    "lokalnamn":"Borensstråket",
+    "huvudlokal":"Årsta"
+  },
+  "Hammarby Sjö":{
+    "lokalnamn":"Hammarby sjö",
+    "huvudlokal":""
+  },
+  "Västersjöbadet, Jönköping SE-Jönköpings län 57.76416, 14.07940":{
+    "lokalnamn":"Västersjön",
+    "huvudlokal":""
+  },
+  "136 50, Jordbro SE-Stockholms län 59.15893, 18.08975":{
+    "lokalnamn":"Öran",
+    "huvudlokal":""
+  },
+  "Triangelparken":{
+    "lokalnamn":"Triangelparken",
+    "huvudlokal":"Enskede"
+  },
+  "Älvestad 301, Vadstena SE-Östergötlands län 58.39357, 14.85798":{
+    "lokalnamn":"Svälinge Sörgård",
+    "huvudlokal":"Tåkern"
+  },
+  "Lövön":{
+    "lokalnamn":"Lövön",
+    "huvudlokal":""
+  },
+  "Svartåmynningens naturreservat--Nybro":{
+    "lokalnamn":"Nybro",
+    "huvudlokal":"Svartåmynningens naturreservat"
+  },
+  "Gröcken 18, Ekshärad SE-Värmlands län (60.1869,13.3339)":{
+    "lokalnamn":"Gröcken",
     "huvudlokal":""
   },
   "Svartåmynningens naturreservat--Sättunaviken":{
     "lokalnamn":"Sättunaviken",
     "huvudlokal":"Svartåmynningens naturreservat"
   },
-  "Växjosjön":{
-    "lokalnamn":"Växjösjön",
+  "Sparregatan 9, Mjölby SE-Östergötlands län 58.32319, 15.09066":{
+    "lokalnamn":"Viringe",
+    "huvudlokal":"Mjölby"
+  },
+  "Ågård ind.omr, Skrea":{
+    "lokalnamn":"Ågård ind.omr, Skrea",
     "huvudlokal":""
   },
-  "Pumphusängen, Ågesta":{
-    "huvudlokal":"Ågesta",
-    "lokalnamn":"Pumphusängen"
+  "Sandviks Camping":{
+    "lokalnamn":"Sandviks camping",
+    "huvudlokal":""
   },
-  "Tanto (Årstabroarnas norra fäste)":{
-    "lokalnamn":"Årstabrons N Fäste",
-    "huvudlokal":"Södermalm"
-  },
-  "Auto selected 59.40382, 17.96211":{
-    "lokalnamn":"E4/Kymlingelänken",
-    "huvudlokal":"Södra Järvafältet"
-  },
-  "Hyllie stationstorg":{
-    "lokalnamn":"Hyllie Arena, Malmö",
+  "Röttle by, Gränna":{
+    "lokalnamn":"Röttle, Gränna",
     "huvudlokal":""
   },
   "Lillsjön":{
     "lokalnamn":"Lillsjön",
     "huvudlokal":"Bromma"
   },
+  "Torö -- Örudden":{
+    "lokalnamn":"Örudden",
+    "huvudlokal":"Torö"
+  },
+  "Farnebofjarden NP":{
+    "lokalnamn":"Färnebofjärden",
+    "huvudlokal":"Färnebofjärdens nationalpark"
+  },
+  "Hornborgasjön, Broddetorp SE-Västra Götalands län 58.30545, 13.58240":{
+    "lokalnamn":"Knektamyren",
+    "huvudlokal":"Hornborgasjön"
+  },
+  "Malmaön, Värmdö SE-Stockholms län (59.2512,18.6527)":{
+    "lokalnamn":"Malmaön",
+    "huvudlokal":"Malma"
+  },
+  "713 93, Nora SE-Örebro län (59.6081,14.7594)":{
+    "lokalnamn":"Finnån",
+    "huvudlokal":"Järnboås sn"
+  },
+  "Lissmadalen":{
+    "lokalnamn":"Lissmasjön",
+    "huvudlokal":"Lissma"
+  },
   "Lantmannavägen 4, Växjö SE-G (56.8681,14.8354)":{
-    "huvudlokal":"",
-    "lokalnamn":"Sandviksverket VEAB"
+    "lokalnamn":"Sandviksverket VEAB",
+    "huvudlokal":""
   },
-  "Årsta gård":{
-    "lokalnamn":"Årsta gård",
-    "huvudlokal":"Årsta"
+  "Årike Fyris":{
+    "lokalnamn":"Årike Fyris",
+    "huvudlokal":""
   },
-  "Ågesta":{
-    "huvudlokal":"Ågesta",
-    "lokalnamn":"Ågestasjön"
-  },
-  "Växjö Domkyrka":{
-    "lokalnamn":"Linnéparken",
-    "huvudlokal":"Växjö"
-  },
-  "Angarnssjöängens NR":{
-    "huvudlokal":"",
-    "lokalnamn":"Angarnssjöängen"
-  },
-  "Valla Torg, Årsta":{
-    "huvudlokal":"Årsta",
-    "lokalnamn":"Valla Torg"
-  },
-  "Isbladskärret":{
-    "lokalnamn":"Isbladskärret",
-    "huvudlokal":"Södra Djurgården"
-  },
-  "Svartåmynningens naturreservat--Nybro":{
-    "lokalnamn":"Nybro",
+  "LFK-tornet, Härnaviken":{
+    "lokalnamn":"LFK-tornet, Härnaviken",
     "huvudlokal":"Svartåmynningens naturreservat"
   },
-  "Storgatan 40, Växjö SE-G (56.8792,14.7996)":{
-    "lokalnamn":"Växjö centrum",
-    "huvudlokal":"Växjö"
-  },
-  "Gåsholma":{
-    "lokalnamn":"Gåsholma",
-    "huvudlokal":"Gåsholma-omr."
-  },
-  "Höganloft 2, Tranås SE-F (58.0325,14.9530)":{
-    "huvudlokal":"",
-    "lokalnamn":"Höganloft rastplats"
-  },
-  "Bråviksvägen":{
-    "lokalnamn":"Bråviksvägen",
-    "huvudlokal":"Årsta"
-  },
-  "Ekbacksvägen 28, Bromma SE-AB 59.34542, 17.96500":{
-    "huvudlokal":"Bromma",
-    "lokalnamn":"Ulvsunda"
-  },
-  "Härna Ryttaregård":{
-    "lokalnamn":"Härna Ryttaregård",
+  "Karlshamn":{
+    "lokalnamn":"Karlshamn",
     "huvudlokal":""
+  },
+  "Lassalyckan, Ulricehamn":{
+    "lokalnamn":"Sanatorieområdet",
+    "huvudlokal":"Ulricehamn"
+  },
+  "Rördromstornet":{
+    "lokalnamn":"Rördromstornet",
+    "huvudlokal":"Sörfjärden, Mälaren"
+  },
+  "471 92, Klövedal SE-Västra Götalands län 58.02714, 11.54926":{
+    "lokalnamn":"Pilane",
+    "huvudlokal":"Klövedal, Tjörn"
+  },
+  "Kusö kalv":{
+    "lokalnamn":"Kusö kalv",
+    "huvudlokal":""
+  },
+  "Jönköping":{
+    "lokalnamn":"Jönköpings hamn",
+    "huvudlokal":"Vättern"
+  },
+  "Jannebergsvägen 2, Karlshamn SE-Blekinge län 56.19085, 14.84712":{
+    "lokalnamn":"Strömma",
+    "huvudlokal":"Karlshman"
+  },
+  "Hornborgasjön--Naturum":{
+    "lokalnamn":"Lagunsjön, Fågeludden",
+    "huvudlokal":"Hornborgasjön"
+  },
+  "Söderåsen NP: Röstånga and Odensjön":{
+    "lokalnamn":"Odensjön",
+    "huvudlokal":"Röstånga"
+  },
+  "E 4, Jönåker SE-Södermanlands län 58.75589, 16.61092":{
+    "lokalnamn":"Trafikplats Gammelsta, 120",
+    "huvudlokal":"Gammelsta"
+  },
+  "Tåkern -- Hovtornet":{
+    "lokalnamn":"Hovtornet",
+    "huvudlokal":"Tåkern"
+  },
+  "Kungsträdgården, Stockholm":{
+    "lokalnamn":"Kungsträdgården",
+    "huvudlokal":"Norrmalm"
+  },
+  "Svärdsnäsviken":{
+    "lokalnamn":"Svärdsnäsviken",
+    "huvudlokal":"Sandemar"
   },
   "Gröndals båtklubb":{
     "lokalnamn":"Gröndalshamnen",
     "huvudlokal":"Gröndal"
   },
-  "Riddersholm, Rådmansö":{
-    "huvudlokal":"",
-    "lokalnamn":"Riddersholm med omnejd, Rådmansö"
+  "Röstånga Konsthall":{
+    "lokalnamn":"Mölledammen",
+    "huvudlokal":"Röstånga"
   },
-  "Auto selected 59.29565, 18.05737":{
-    "lokalnamn":"Borensstråket",
+  "Norr Enby":{
+    "lokalnamn":"n enby",
+    "huvudlokal":"Uvängen"
+  },
+  "Isbladsviken":{
+    "lokalnamn":"Isbladsviken",
+    "huvudlokal":"Södra Djurgården"
+  },
+  "Djupvik strand":{
+    "lokalnamn":"Djupvik",
+    "huvudlokal":""
+  },
+  "Länsväg 136, Borgholm SE-Kalmar län 56.96622, 16.80167":{
+    "lokalnamn":"Ebbegärde",
+    "huvudlokal":""
+  },
+  "Lillsjön-Örnässjön, Kungsängen SE-Stockholms län 59.49133, 17.71972":{
+    "lokalnamn":"Lillsjöns skidbacke",
+    "huvudlokal":"Kungsängen"
+  },
+  "Hornborgasjön--Trandansen":{
+    "lokalnamn":"Trandansen",
+    "huvudlokal":"Hornborgasjön"
+  },
+  "Gladö Kvarntippen":{
+    "lokalnamn":"Nya tippen Gladökvarn",
+    "huvudlokal":""
+  },
+  "Ekbacksvägen 28, Bromma SE-AB 59.34542, 17.96500":{
+    "lokalnamn":"Ulvsunda",
+    "huvudlokal":"Bromma"
+  },
+  "Växjö Domkyrka":{
+    "lokalnamn":"Linnéparken",
+    "huvudlokal":"Växjö"
+  },
+  "Gruebäck, Falkenberg":{
+    "lokalnamn":"Gruebäck",
+    "huvudlokal":"Falkenberg"
+  },
+  "Sickla strand":{
+    "lokalnamn":"Sickla strand",
+    "huvudlokal":""
+  },
+  "Tåkern--Svälingetornet":{
+    "lokalnamn":"Svälingetornet",
+    "huvudlokal":"Tåkern"
+  },
+  "Matningen, Hjälstaviken":{
+    "lokalnamn":"Hjulströms brygga",
+    "huvudlokal":"Hjälstaviken"
+  },
+  "Hemmesta Sjöäng":{
+    "lokalnamn":"Hemmesta sjöäng",
+    "huvudlokal":""
+  },
+  "Årsta holmar":{
+    "lokalnamn":"Årsta Holmar",
+    "huvudlokal":""
+  },
+  "Auto selected 59.40382, 17.96211":{
+    "lokalnamn":"E4/Kymlingelänken",
+    "huvudlokal":"Södra Järvafältet"
+  },
+  "Fågelskär, Landsort":{
+    "lokalnamn":"Norrudden",
+    "huvudlokal":"Landsort"
+  },
+  "Storgatan 40, Växjö SE-G (56.8792,14.7996)":{
+    "lokalnamn":"Växjö centrum",
+    "huvudlokal":"Växjö"
+  },
+  "Liljeholmskajen":{
+    "lokalnamn":"Årstadalshamnen",
+    "huvudlokal":""
+  },
+  "Höganloft 2, Tranås SE-F (58.0325,14.9530)":{
+    "lokalnamn":"Höganloft rastplats",
+    "huvudlokal":""
+  },
+  "Kockholmen":{
+    "lokalnamn":"Kockholmen",
+    "huvudlokal":"Rossö, Strömstad"
+  },
+  "Gislasträtet 38, Mörrum SE-Blekinge län 56.20851, 14.74175":{
+    "lokalnamn":"Mörrum",
+    "huvudlokal":""
+  },
+  "Skansen":{
+    "lokalnamn":"Skansen",
+    "huvudlokal":"Södra Djurgården"
+  },
+  "Brånebacken 2, Jönköping SE-Jönköpings län 57.78411, 14.16085":{
+    "lokalnamn":"Jönköpings station",
+    "huvudlokal":"Jönköping"
+  },
+  "Hornborgarsjön--Fågeludden":{
+    "lokalnamn":"Fågeludden",
+    "huvudlokal":"Hornborgasjön"
+  },
+  "Ågesta":{
+    "lokalnamn":"Ågestasjön",
+    "huvudlokal":"Ågesta"
+  },
+  "Valla Torg, Årsta":{
+    "lokalnamn":"Valla Torg",
     "huvudlokal":"Årsta"
+  },
+  "Härna Ryttaregård":{
+    "lokalnamn":"Härna Ryttaregård",
+    "huvudlokal":""
+  },
+  "Ölands Norra Udde":{
+    "lokalnamn":"Ölands norra udde",
+    "huvudlokal":""
+  },
+  "Nordkoster":{
+    "lokalnamn":"Hasselvikarna",
+    "huvudlokal":"Nord-Koster"
+  },
+  "Öland, Degerhamn SE-Kalmar län 56.25578, 16.48509":{
+    "lokalnamn":"Näsbystrand",
+    "huvudlokal":"Näsby strand"
+  },
+  "Åsenvägen 115, Jönköping SE-Jönköpings län 57.77175, 14.11716":{
+    "lokalnamn":"Åsens gård",
+    "huvudlokal":"Jönköping"
+  },
+  "Årstafältet":{
+    "lokalnamn":"Årstafältet, Stockholm",
+    "huvudlokal":""
+  },
+  "Gamla Stadens torg 3, Lidköping SE-Västra Götalands län 58.50314, 13.16165":{
+    "lokalnamn":"Lidan",
+    "huvudlokal":"Lidköping"
+  },
+  "Årsta gård":{
+    "lokalnamn":"Årsta gård",
+    "huvudlokal":"Årsta"
+  },
+  "Åkersbergsvägen, Trollhättan SE-Västra Götalands län (58.2822,12.2802)":{
+    "lokalnamn":"Fallfåran",
+    "huvudlokal":"Trollhättan"
+  },
+  "Tyresta National Park":{
+    "lokalnamn":"Tyresta",
+    "huvudlokal":""
+  },
+  "Ågesta -- Orlångsån":{
+    "lokalnamn":"Orlångsån",
+    "huvudlokal":"Ågesta"
+  },
+  "Torö--Herrhamra ängar":{
+    "lokalnamn":"Herrhamra ängar",
+    "huvudlokal":"Torö"
+  },
+  "Alviks strand":{
+    "lokalnamn":"Alviks strand",
+    "huvudlokal":"Bromma"
+  },
+  "Drottningholmsvägen 74, Stockholm SE-AB (59.3321,18.0166)":{
+    "lokalnamn":"Thorildsplan",
+    "huvudlokal":"Kungsholmen"
+  },
+  "Ängsholmsvägen 75, Nynäshamn SE-Stockholms län 58.88690, 17.85849":{
+    "lokalnamn":"Oxnö",
+    "huvudlokal":""
+  },
+  "148 96, Nynäshamn SE-Stockholm 59.04262, 17.82898":{
+    "lokalnamn":"n enby",
+    "huvudlokal":"Uvängen"
+  },
+  "Villa Godthem, Södra Djurgården":{
+    "lokalnamn":"Framnäs",
+    "huvudlokal":"Södra Djurgården"
+  },
+  "Växjosjön":{
+    "lokalnamn":"Växjösjön",
+    "huvudlokal":""
+  },
+  "Vedelsvägen 29, Stehag SE-Skåne län 55.90380, 13.39742":{
+    "lokalnamn":"Stehag",
+    "huvudlokal":""
+  },
+  "Ulvsundasjön, Bromma SE-Stockholms län (59.3428,17.9857)":{
+    "lokalnamn":"Ulvsundasjön",
+    "huvudlokal":""
+  },
+  "Slussen, Södermalm":{
+    "lokalnamn":"Slussen",
+    "huvudlokal":"Södermalm"
+  },
+  "Tåkern--Väversundamaden":{
+    "lokalnamn":"Väversundamaden",
+    "huvudlokal":"Tåkern"
+  },
+  "Stjärnorpsravinen":{
+    "lokalnamn":"Stjärnorp slottsruin",
+    "huvudlokal":"Stjärnorpsravinen"
+  },
+  "Tåkern birding tower":{
+    "lokalnamn":"Svanshals udde",
+    "huvudlokal":"Tåkern"
+  },
+  "Tyresta by":{
+    "lokalnamn":"Tyresta by",
+    "huvudlokal":"Tyresta"
+  },
+  "Skeppsbron":{
+    "lokalnamn":"Skeppsbron",
+    "huvudlokal":"Stockholm ström"
+  },
+  "Grundevatten":{
+    "lokalnamn":"Grundevatten",
+    "huvudlokal":"Tanum"
+  },
+  "Ekudden, Mariestad":{
+    "lokalnamn":"Båtgården N Bäcken",
+    "huvudlokal":"Ekudden, Mariestad"
+  },
+  "Sandemar NR":{
+    "lokalnamn":"Sandemar",
+    "huvudlokal":""
+  },
+  "Hyllie stationstorg":{
+    "lokalnamn":"Hyllie Arena, Malmö",
+    "huvudlokal":""
+  },
+  "Tullbron, Falkenbergs hamn":{
+    "lokalnamn":"Tullbron",
+    "huvudlokal":"Falkenbergs hamn"
+  },
+  "Sandön, Färnebofjärdens National Park":{
+    "lokalnamn":"Färnebofjärden",
+    "huvudlokal":"Färnebofjärdens nationalpark"
+  },
+  "Strömsberg, Jönköping":{
+    "lokalnamn":"Skyttesgärdsravinen",
+    "huvudlokal":"Strömsberg"
+  },
+  "Torö -- Reveln":{
+    "lokalnamn":"Reveln",
+    "huvudlokal":"Torö"
+  },
+  "Masthuggskyrkans Annex, Göteborg SE-Västra Götalands län 57.69719, 11.93711":{
+    "lokalnamn":"Masthugget",
+    "huvudlokal":"Göteborg"
+  },
+  "Hjälstaviken NR":{
+    "lokalnamn":"Hjälstaviken",
+    "huvudlokal":""
+  },
+  "Bråviksvägen":{
+    "lokalnamn":"Bråviksvägen",
+    "huvudlokal":"Årsta"
+  },
+  "Svartkällsskogen":{
+    "lokalnamn":"Svartkällsskogens naturreservat",
+    "huvudlokal":""
+  },
+  "Gokriksudden, Arboga SE-Västmanlands län 59.29763, 15.65659":{
+    "lokalnamn":"Gökriksudden",
+    "huvudlokal":"Södra Lunger"
+  },
+  "331 44, Värnamo SE-Jönköpings län 57.15375, 14.08276":{
+    "lokalnamn":"Våtmarken",
+    "huvudlokal":"Bredasten"
+  },
+  "Riddersholm, Rådmansö":{
+    "lokalnamn":"Riddersholm med omnejd, Rådmansö",
+    "huvudlokal":""
+  },
+  "Källtorpssjön":{
+    "lokalnamn":"Källtorpssjön",
+    "huvudlokal":"Nackareservatet"
+  },
+  "Östra Styran":{
+    "lokalnamn":"Östra Styran",
+    "huvudlokal":"Styran"
+  },
+  "Gömmaren NR":{
+    "lokalnamn":"Gömmaren",
+    "huvudlokal":""
+  },
+  "Fulufjällets NP":{
+    "lokalnamn":"Tangsjöarna",
+    "huvudlokal":""
+  },
+  "Lockörns vadarstrand":{
+    "lokalnamn":"Lockörns vadarstrand",
+    "huvudlokal":"Kinneviken"
+  },
+  "Isbladskärret":{
+    "lokalnamn":"Isbladskärret",
+    "huvudlokal":"Södra Djurgården"
+  },
+  "Länsväg E 930, Ödeshög SE-Östergötlands län 58.32892, 14.72052":{
+    "lokalnamn":"Holmenbäcken",
+    "huvudlokal":"Tåkern"
+  },
+  "Göteborg--Slottsskogen":{
+    "lokalnamn":"Slottsskogen, Göteborg",
+    "huvudlokal":""
+  },
+  "Torö--Södra Torö (General area)":{
+    "lokalnamn":"Ören",
+    "huvudlokal":"Torö"
+  },
+  "Gåsholma":{
+    "lokalnamn":"Gåsholma",
+    "huvudlokal":"Gåsholma-omr."
+  },
+  "Brakmarsvägen 48, Tyresö SE-Stockholms län (59.2059,18.3170)":{
+    "lokalnamn":"Brakmaren",
+    "huvudlokal":""
+  },
+  "Lilla Sickla":{
+    "lokalnamn":"Lilla Sickla",
+    "huvudlokal":"Hammarbyhöjden"
+  },
+  "Färnebofjärdens National Park, Österfärnebo SE-Gävleborgs län 60.21109, 16.78995":{
+    "lokalnamn":"Färnebofjärden",
+    "huvudlokal":"Färnebofjärdens nationalpark"
+  },
+  "Nykarlebygatan 202, Kista SE-Stockholms län 59.41026, 17.91426":{
+    "lokalnamn":"Granby Gård",
+    "huvudlokal":"Södra Järvafältet"
+  },
+  "Pumphusängen, Ågesta":{
+    "lokalnamn":"Pumphusängen",
+    "huvudlokal":"Ågesta"
+  },
+  "Slottskyrkogården, Jönköping SE-Jönköpings län 57.78352, 14.15672":{
+    "lokalnamn":"Slottskyrkogården",
+    "huvudlokal":"Jönköping"
+  },
+  "Rosenlunds bankar":{
+    "lokalnamn":"Rosenlundsbankarna",
+    "huvudlokal":"Vättern"
+  },
+  "Riksväg 44, Götene SE-Västra Götalands län 58.53386, 13.47694":{
+    "lokalnamn":"Götene",
+    "huvudlokal":""
+  },
+  "155 94, Nykvarn SE-Stockholms län 59.13146, 17.35170":{
+    "lokalnamn":"SV Yngern",
+    "huvudlokal":"Södra Yngern"
+  },
+  "Hedenstorpsvägen 5, Jönköping SE-Jönköpings län 57.76757, 14.09576":{
+    "lokalnamn":"Hedenstorp industriområde",
+    "huvudlokal":"Jönköping"
+  },
+  "Segerstad Fyr":{
+    "lokalnamn":"Segerstads fyr",
+    "huvudlokal":""
+  },
+  "Fulufjällets NP-- Naturum":{
+    "lokalnamn":"Björbäcksstugan, Naturum Fulufjället",
+    "huvudlokal":""
+  },
+  "Stendörren NR":{
+    "lokalnamn":"Stendörrens naturreservat",
+    "huvudlokal":""
+  },
+  "Norrån, Ågesta":{
+    "lokalnamn":"Norrån",
+    "huvudlokal":"Ågesta"
+  },
+  "Drottningtorget, Göteborg":{
+    "lokalnamn":"Drottningtorget, Göteborg",
+    "huvudlokal":""
+  },
+  "Tanto (Årstabroarnas norra fäste)":{
+    "lokalnamn":"Årstabrons N Fäste",
+    "huvudlokal":"Södermalm"
   }
 }
