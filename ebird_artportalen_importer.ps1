@@ -114,10 +114,30 @@ $outDir = Join-Path $importDir ("{0} eBird {1} to {2}" -f (Get-Date -Format 'yyy
 $skipFile = Join-Path ([IO.Path]::GetTempPath()) 'ebird_imported_ids.txt'
 Set-Content -Path $skipFile -Value $importedIds -Encoding UTF8
 
+# The scraper reads the login from EBIRD_USERNAME / EBIRD_PASSWORD. A shell
+# started before they were set doesn't have them, so fall back to the saved
+# user environment variables.
+foreach ($name in 'EBIRD_USERNAME', 'EBIRD_PASSWORD')
+{
+  if (-not [Environment]::GetEnvironmentVariable($name))
+  {
+    [Environment]::SetEnvironmentVariable($name, [Environment]::GetEnvironmentVariable($name, 'User'))
+  }
+}
+
 Write-Host "Downloading eBird checklists $start to $end ..."
 & $python $scraper --start $start --end $end --out $outDir --skip-ids $skipFile
-$downloadOk = ($LASTEXITCODE -eq 0)
+$scraperExit = $LASTEXITCODE
 Remove-Item $skipFile -ErrorAction SilentlyContinue
+# 0 = all downloaded, 3 = some checklists failed, anything else = no usable run
+if ($scraperExit -ne 0 -and $scraperExit -ne 3)
+{
+  if ((Test-Path $outDir) -and -not (Get-ChildItem $outDir -Filter *.csv -File))
+  { Remove-Item $outDir -Recurse -Force
+  }
+  throw "Download failed (exit code $scraperExit); nothing imported, import state not changed."
+}
+$downloadOk = ($scraperExit -eq 0)
 if (-not $downloadOk)
 {
   Write-Warning 'Some checklists failed to download. Converting the rest; the last import date is not moved, so a later -SinceLastImport retries them.'
