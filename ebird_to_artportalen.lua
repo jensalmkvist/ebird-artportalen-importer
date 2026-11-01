@@ -1,17 +1,19 @@
--- csv_to_artportalen.lua
--- Transform input CSV into columns expected by your Excel template:
--- Artnamn, Antal, Lokalnamn, Startdatum, Starttid, Slutdatum, Sluttid
+-- ebird_to_artportalen.lua
+-- Transform eBird checklist CSVs into columns expected by the Artportalen
+-- bulk-import Excel template:
+-- Artnamn, Antal, Lokalnamn, Huvudlokal, Startdatum, Starttid, Slutdatum, Sluttid
 --
 -- Uses two JSON-backed mappers (KeyValueMapper.lua) for:
---   Species  -> Artnamn   (species_map.json)
---   Location -> Lokalnamn (mappings.json)
+--   Species  -> Artnamn                  (species_map.json)
+--   Location -> {lokalnamn, huvudlokal}  (mappings.json)
 --
 -- Assumes:
 --   - CSV columns: Species, Count, Location, Observation Date, Start Time, Duration
---   - Duration is in minutes (integer/number); if "HH:MM" is given, it will be converted to minutes.
+--   - Duration as minutes ("90"), "HH:MM", or text ("1 hour(s), 26 minute(s)").
+--   - If the checklist runs past midnight, Slutdatum is moved forward accordingly.
 --
 -- Usage:
---   lua csv_to_artportalen.lua <input.csv> <output.csv>
+--   lua ebird_to_artportalen.lua <input_folder> <output.csv>
 --
 -- Tip (Windows/PowerShell, for å/ä/ö): run once per session before lua:
 --   chcp 65001 > $null
@@ -245,20 +247,43 @@ local function parse_time_hms(s)
   return nil, nil, nil
 end
 
--- Add minutes to a time string "HH:MM" (or "HH:MM:SS"), return "HH:MM" (wrap after 24h)
+-- Add minutes to a time string "HH:MM" (or "HH:MM:SS").
+-- Returns "HH:MM" (wrapped after 24h) and the number of days crossed,
+-- e.g. ("23:30", 60) -> "00:30", 1
 local function add_minutes_to_time(start_str, minutes)
   local h, m = parse_time_hms(start_str)
   if not h then
     dprintf("add_minutes_to_string start_str='%s'", start_str)
-    return start_str
+    return start_str, 0
   end
   dprintf("add_minutes_to_string h='%d', m='%d'", h, m)
   minutes = tonumber(minutes) or 0
   local total = h * 60 + m + minutes
+  local days = math.floor(total / (24 * 60))
   total = total % (24 * 60)
   local out_h = math.floor(total / 60)
   local out_m = total % 60
-  return string.format('%02d:%02d', out_h, out_m)
+  return string.format('%02d:%02d', out_h, out_m), days
+end
+
+-- Add whole days to a "YYYY-MM-DD" date. Returns input unchanged if it
+-- doesn't look like an ISO date. os.time normalizes day overflow
+-- (e.g. Dec 32 -> Jan 1); noon avoids DST edge cases.
+local function add_days_to_date(date_str, days)
+  if not days or days == 0 then
+    return date_str
+  end
+  local y, mo, d = tostring(date_str or ''):match '^(%d%d%d%d)-(%d%d)-(%d%d)$'
+  if not y then
+    return date_str
+  end
+  local t = os.time {
+    year = tonumber(y),
+    month = tonumber(mo),
+    day = tonumber(d) + days,
+    hour = 12,
+  }
+  return os.date('%Y-%m-%d', t)
 end
 
 -- Accept:
@@ -521,10 +546,11 @@ local function main()
 
         -- Time math
         local mins = parse_duration_to_minutes(duration)
-        local sluttid = (starttime ~= '')
-            and add_minutes_to_time(starttime, mins)
-          or ''
-        local slutdatum = startdate
+        local sluttid, days_crossed = '', 0
+        if starttime ~= '' then
+          sluttid, days_crossed = add_minutes_to_time(starttime, mins)
+        end
+        local slutdatum = add_days_to_date(startdate, days_crossed)
 
         -- Output row
         write_csv_row(fout, {
