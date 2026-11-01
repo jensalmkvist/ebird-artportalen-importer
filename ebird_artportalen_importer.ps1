@@ -10,8 +10,11 @@
     new folder under "Import files\"), then converts them. Checklists that were
     imported before are skipped, so overlapping dates don't give duplicates.
 
-    import_state.json remembers the last import date and the imported
-    checklist IDs. On the first dated run, every S*.csv already in
+    Type p at any question to pause. Your answers so far are kept, and
+    -Resume continues with the already downloaded checklists later.
+
+    import_state.json remembers the last import date, the imported checklist
+    IDs and a paused import. On the first dated run, every S*.csv already in
     "Import files\" counts as imported.
 
 .PARAMETER StartDate
@@ -23,6 +26,9 @@
 .PARAMETER SinceLastImport
     Get all checklists from the last import date up to today.
 
+.PARAMETER Resume
+    Continue a paused import (no new download).
+
 .PARAMETER ScraperPath
     Folder of ebird-checklist-scraper (default: next to this repo).
 
@@ -30,12 +36,14 @@
     .\ebird_artportalen_importer.ps1 -StartDate 2026-10-01
     .\ebird_artportalen_importer.ps1 -StartDate 2026-10-01 -EndDate 2026-10-15
     .\ebird_artportalen_importer.ps1 -SinceLastImport
+    .\ebird_artportalen_importer.ps1 -Resume
 #>
 
 param(
   [DateTime]$StartDate,
   [DateTime]$EndDate,
   [switch]$SinceLastImport,
+  [switch]$Resume,
   [string]$ScraperPath = (Join-Path $PSScriptRoot '..\ebird-checklist-scraper')
 )
 
@@ -48,10 +56,14 @@ chcp 65001 >$null
 
 $importDir = Join-Path $PSScriptRoot 'Import files'
 $statePath = Join-Path $PSScriptRoot 'import_state.json'
+$datesGiven = $PSBoundParameters.ContainsKey('StartDate') -or
+  $PSBoundParameters.ContainsKey('EndDate') -or $SinceLastImport
+
+# Exit code of ebird_to_artportalen.lua when you type p at a question
+$EXIT_PAUSED = 4
 
 # --- No dates: convert what is in "Import files\" ----------------------------
-if (-not $PSBoundParameters.ContainsKey('StartDate') -and
-    -not $PSBoundParameters.ContainsKey('EndDate') -and -not $SinceLastImport)
+if (-not $datesGiven -and -not $Resume)
 {
   lua .\ebird_to_artportalen.lua "$importDir/" .\out_for_excel.csv
   exit $LASTEXITCODE
@@ -65,16 +77,77 @@ function Get-ChecklistIds($dir)
     ForEach-Object { $Matches[1] }
 }
 
+$pending = $null
 if (Test-Path $statePath)
 {
   $state = Get-Content $statePath -Raw -Encoding UTF8 | ConvertFrom-Json
   $lastImport = $state.last_import
   $importedIds = @($state.imported_ids)
+  $pending = $state.pending
 } else
 {
   $lastImport = $null
   $importedIds = @(Get-ChecklistIds $importDir | Sort-Object -Unique)
   Write-Host "First dated import: $($importedIds.Count) checklists already in 'Import files' count as imported."
+}
+
+function Save-State
+{
+  [ordered]@{
+    last_import  = $script:lastImport
+    imported_ids = @($script:importedIds | Sort-Object -Unique)
+    pending      = $script:pending
+  } | ConvertTo-Json | Set-Content -Path $statePath -Encoding UTF8
+}
+
+# Convert a downloaded folder. On success the checklists count as imported;
+# when paused (or on an error) the folder stays pending for -Resume.
+function Convert-Download($folder, $start, $end, $downloadOk)
+{
+  lua .\ebird_to_artportalen.lua "$folder/" .\out_for_excel.csv
+  $luaExit = $LASTEXITCODE
+  if ($luaExit -ne 0)
+  {
+    $script:pending = [ordered]@{ folder = $folder; start = $start; end = $end; download_ok = $downloadOk }
+    Save-State
+    if ($luaExit -eq $EXIT_PAUSED)
+    { Write-Host "Import $start to $end paused. Continue with: .\ebird_artportalen_importer.ps1 -Resume"
+    } else
+    { Write-Warning "Conversion stopped with an error (exit code $luaExit). Fix it, then continue with -Resume."
+    }
+    exit $luaExit
+  }
+
+  $newIds = @(Get-ChecklistIds $folder)
+  $script:importedIds = @($script:importedIds) + $newIds
+  if ($downloadOk -and ((-not $script:lastImport) -or $end -gt $script:lastImport))
+  { $script:lastImport = $end
+  }
+  $script:pending = $null
+  Save-State
+  Write-Host "Imported $($newIds.Count) checklists. Last import date: $script:lastImport"
+}
+
+# --- Resume a paused import --------------------------------------------------
+if ($Resume)
+{
+  if ($datesGiven)
+  { throw 'Use -Resume on its own; it continues the paused import.'
+  }
+  if (-not $pending)
+  { throw 'There is no paused import to resume.'
+  }
+  if (-not (Test-Path $pending.folder))
+  { throw "The paused import's folder is gone: $($pending.folder)"
+  }
+  Write-Host "Resuming import $($pending.start) to $($pending.end) ..."
+  Convert-Download $pending.folder $pending.start $pending.end $pending.download_ok
+  exit 0
+}
+
+if ($pending)
+{
+  throw "Import $($pending.start) to $($pending.end) is paused. Finish it first with: .\ebird_artportalen_importer.ps1 -Resume"
 }
 
 # --- Date range --------------------------------------------------------------
@@ -143,33 +216,19 @@ if (-not $downloadOk)
   Write-Warning 'Some checklists failed to download. Converting the rest; the last import date is not moved, so a later -SinceLastImport retries them.'
 }
 
-$newIds = @()
-if (Test-Path $outDir)
-{ $newIds = @(Get-ChecklistIds $outDir)
-}
-
 # --- Convert -----------------------------------------------------------------
-if ($newIds.Count -eq 0)
+if (-not ((Test-Path $outDir) -and (Get-ChecklistIds $outDir)))
 {
   Write-Host 'No new checklists to import.'
   if (Test-Path $outDir)
   { Remove-Item $outDir -Recurse -Force
   }
-} else
-{
-  lua .\ebird_to_artportalen.lua "$outDir/" .\out_for_excel.csv
-  if ($LASTEXITCODE -ne 0)
-  { throw 'Conversion failed; import state not updated.'
+  if ($downloadOk -and ((-not $lastImport) -or $end -gt $lastImport))
+  { $lastImport = $end
   }
+  Save-State
+  Write-Host "Last import date: $lastImport"
+  exit 0
 }
 
-# --- Save state --------------------------------------------------------------
-if ($downloadOk -and ((-not $lastImport) -or $end -gt $lastImport))
-{ $lastImport = $end
-}
-$state = [ordered]@{
-  last_import  = $lastImport
-  imported_ids = @(@($importedIds) + $newIds | Sort-Object -Unique)
-}
-$state | ConvertTo-Json | Set-Content -Path $statePath -Encoding UTF8
-Write-Host "Imported $($newIds.Count) checklists. Last import date: $lastImport"
+Convert-Download $outDir $start $end $downloadOk

@@ -565,6 +565,19 @@ local function suggest_own(sites, terms, lat, lon, with_huvudlokal)
   return out
 end
 
+-- Exit code when you pause at a question; ebird_artportalen_importer.ps1
+-- uses it to keep the import open for -Resume.
+local EXIT_PAUSED = 4
+
+-- Stop at a question. Answers given so far are already saved in the mapping
+-- files, and the output CSV is only written at the end, so nothing is lost.
+local function pause()
+  print ''
+  print 'Paused. Your answers so far are saved; the output CSV was not changed.'
+  print 'Run the same command again to continue (with the .ps1: -Resume).'
+  os.exit(EXIT_PAUSED)
+end
+
 local function print_site(i, s)
   local extra = {}
   if s.region and s.region ~= '' then
@@ -644,6 +657,7 @@ local function choose_location(location, lat, lon, location_mapper)
     end
     print '  m) enter Lokalnamn/Huvudlokal manually'
     print '  s) skip (leave empty, ask again next run)'
+    print '  p) pause (stop here, continue later)'
     print '  Or type coordinates "lat, lon" or a site name to search again.'
     io.write 'Choice: '
     local answer = trim(io.read '*l' or '')
@@ -659,6 +673,8 @@ local function choose_location(location, lat, lon, location_mapper)
       }
     elseif lower == '' or lower == 's' then
       return nil
+    elseif lower == 'p' then
+      pause()
     elseif lower == 'm' then
       io.write(("Enter Lokalnamn for '%s' (blank to skip): "):format(location))
       local ln = trim(io.read '*l' or '')
@@ -710,18 +726,8 @@ local function main()
   -- Locations skipped this run (not asked again for every row)
   local skipped_locations = {}
 
-  -- Output (header once)
-  local fout = assert(io.open(output, 'w'), 'Cannot open output CSV')
-  write_csv_row(fout, {
-    'Artnamn',
-    'Antal',
-    'Lokalnamn',
-    'Huvudlokal',
-    'Startdatum',
-    'Starttid',
-    'Slutdatum',
-    'Sluttid',
-  })
+  -- Output rows, written at the end so a pause leaves the old output alone
+  local out_rows = {}
 
   -- Process each CSV file in the directory
   for _, in_csv in ipairs(inputs) do
@@ -791,12 +797,14 @@ local function main()
         local art = species ~= '' and species_mapper:get(species) or nil
         if not art and species ~= '' then
           io.write(
-            ("No mapping for species '%s'. Enter Artnamn (blank to skip): "):format(
+            ("No mapping for species '%s'. Enter Artnamn (blank to skip, p to pause): "):format(
               species
             )
           )
           local val = trim(io.read '*l' or '')
-          if val ~= '' then
+          if val:lower() == 'p' then
+            pause()
+          elseif val ~= '' then
             local ok, err = species_mapper:add(species, val)
             if ok then
               art = val
@@ -874,7 +882,7 @@ local function main()
         local slutdatum = add_days_to_date(startdate, days_crossed)
 
         -- Output row
-        write_csv_row(fout, {
+        out_rows[#out_rows + 1] = {
           art or '',
           count or '',
           lokal or '',
@@ -883,7 +891,7 @@ local function main()
           starttime or '',
           slutdatum or '',
           sluttid or '',
-        })
+        }
       end
     end
 
@@ -891,6 +899,20 @@ local function main()
     ::continue::
   end
 
+  local fout = assert(io.open(output, 'w'), 'Cannot open output CSV')
+  write_csv_row(fout, {
+    'Artnamn',
+    'Antal',
+    'Lokalnamn',
+    'Huvudlokal',
+    'Startdatum',
+    'Starttid',
+    'Slutdatum',
+    'Sluttid',
+  })
+  for _, row in ipairs(out_rows) do
+    write_csv_row(fout, row)
+  end
   fout:close()
 
   -- Convert the just-written output.csv to TSV and copy to clipboard (includes header)

@@ -67,6 +67,22 @@ count as imported. If a download fails, the last import date isn't moved, so
 the next `-SinceLastImport` tries again. Use `-ScraperPath` if the scraper is
 somewhere else.
 
+#### Pause and resume
+
+Type `p` at any species or location question to stop. Every answer you gave
+is already saved in the mapping files, and `out_for_excel.csv` is left as it
+was (it is only written when a run finishes). Later, continue with the
+checklists that were already downloaded:
+
+```powershell
+.\ebird_artportalen_importer.ps1 -Resume
+```
+
+Questions you answered aren't asked again. You can pause and resume as often
+as you like; the checklists only count as imported once a run gets to the end.
+While an import is paused, a new dated run refuses to start, so two imports
+don't get mixed up. (Without the `.ps1`, just run the same `lua` command again.)
+
 ### Unknown species
 
 When a species isn't in `species_map.json`, the script asks in the terminal:
