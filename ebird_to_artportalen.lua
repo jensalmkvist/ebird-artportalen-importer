@@ -92,9 +92,15 @@ local function trim(s)
   return (tostring(s or ''):gsub('^%s+', ''):gsub('%s+$', ''))
 end
 
+-- Replace no-break spaces with plain spaces. Newer eBird exports write times
+-- as "7:55<U+202F>AM" (narrow no-break space), which %s does not match.
+local function normalize_spaces(s)
+  return (tostring(s or ''):gsub('\226\128\175', ' '):gsub('\194\160', ' '))
+end
+
 -- Normalize "H:MM AM/PM" (also supports "HH:MM:SS AM/PM") to 24-hour "HH:MM"
 local function to_24h_time(s)
-  s = trim(s or '')
+  s = trim(normalize_spaces(s))
   if s == '' then
     return ''
   end
@@ -294,7 +300,7 @@ end
 --  - HH:MM: "1:30"
 --  - text: "7 minute(s)", "1 hour(s), 26 minute(s)", "2 hours, 5 minutes"
 local function parse_duration_to_minutes(s)
-  local raw = tostring(s or '')
+  local raw = normalize_spaces(s)
   dprintf("raw='%s'", raw)
 
   s = trim(raw)
