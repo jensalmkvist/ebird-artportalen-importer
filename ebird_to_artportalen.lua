@@ -1,17 +1,21 @@
--- csv_to_artportalen.lua
--- Transform input CSV into columns expected by your Excel template:
--- Artnamn, Antal, Lokalnamn, Startdatum, Starttid, Slutdatum, Sluttid
+-- ebird_to_artportalen.lua
+-- Transform eBird checklist CSVs into columns expected by the Artportalen
+-- bulk-import Excel template:
+-- Artnamn, Antal, Lokalnamn, Huvudlokal, Startdatum, Starttid, Slutdatum, Sluttid
 --
 -- Uses two JSON-backed mappers (KeyValueMapper.lua) for:
---   Species  -> Artnamn   (species_map.json)
---   Location -> Lokalnamn (mappings.json)
+--   Species  -> Artnamn                  (species_map.json)
+--   Location -> {lokalnamn, huvudlokal}  (mappings.json)
 --
 -- Assumes:
 --   - CSV columns: Species, Count, Location, Observation Date, Start Time, Duration
---   - Duration is in minutes (integer/number); if "HH:MM" is given, it will be converted to minutes.
+--   - Duration as minutes ("90"), "HH:MM", or text ("1 hour(s), 26 minute(s)").
+--   - If the checklist runs past midnight, Slutdatum is moved forward accordingly.
+--   - Unknown locations get numbered suggestions of public Artportalen sites
+--     (ArtportalenSites.lua), nearest first when coordinates are known.
 --
 -- Usage:
---   lua csv_to_artportalen.lua <input.csv> <output.csv>
+--   lua ebird_to_artportalen.lua <input_folder> <output.csv>
 --
 -- Tip (Windows/PowerShell, for å/ä/ö): run once per session before lua:
 --   chcp 65001 > $null
@@ -30,6 +34,7 @@ local function dprintf(fmt, ...)
 end
 
 local Mapper = require 'KeyValueMapper' -- generic key->value JSON mapper
+local Sites = require 'ArtportalenSites' -- public Artportalen site lookup
 
 -- -------- Utilities --------
 
@@ -245,20 +250,43 @@ local function parse_time_hms(s)
   return nil, nil, nil
 end
 
--- Add minutes to a time string "HH:MM" (or "HH:MM:SS"), return "HH:MM" (wrap after 24h)
+-- Add minutes to a time string "HH:MM" (or "HH:MM:SS").
+-- Returns "HH:MM" (wrapped after 24h) and the number of days crossed,
+-- e.g. ("23:30", 60) -> "00:30", 1
 local function add_minutes_to_time(start_str, minutes)
   local h, m = parse_time_hms(start_str)
   if not h then
     dprintf("add_minutes_to_string start_str='%s'", start_str)
-    return start_str
+    return start_str, 0
   end
   dprintf("add_minutes_to_string h='%d', m='%d'", h, m)
   minutes = tonumber(minutes) or 0
   local total = h * 60 + m + minutes
+  local days = math.floor(total / (24 * 60))
   total = total % (24 * 60)
   local out_h = math.floor(total / 60)
   local out_m = total % 60
-  return string.format('%02d:%02d', out_h, out_m)
+  return string.format('%02d:%02d', out_h, out_m), days
+end
+
+-- Add whole days to a "YYYY-MM-DD" date. Returns input unchanged if it
+-- doesn't look like an ISO date. os.time normalizes day overflow
+-- (e.g. Dec 32 -> Jan 1); noon avoids DST edge cases.
+local function add_days_to_date(date_str, days)
+  if not days or days == 0 then
+    return date_str
+  end
+  local y, mo, d = tostring(date_str or ''):match '^(%d%d%d%d)-(%d%d)-(%d%d)$'
+  if not y then
+    return date_str
+  end
+  local t = os.time {
+    year = tonumber(y),
+    month = tonumber(mo),
+    day = tonumber(d) + days,
+    hour = 12,
+  }
+  return os.date('%Y-%m-%d', t)
 end
 
 -- Accept:
@@ -352,6 +380,166 @@ local function csv_file_to_tsv_blob(csv_path)
   return table.concat(lines, '\n')
 end
 
+-- -------- Unknown locations: suggest Artportalen sites --------
+
+-- Number of site suggestions to show for an unknown location
+local MAX_SUGGESTIONS = 5
+
+local function format_distance(m)
+  if not m then
+    return ''
+  end
+  if m < 1000 then
+    return ('%d m'):format(math.floor(m + 0.5))
+  end
+  return ('%.1f km'):format(m / 1000)
+end
+
+-- Search terms for a location name without coordinates.
+-- eBird hotspots look like "Hornborgasjön--Utloppet" or "Kvarnberget, Hjälstaviken".
+local function name_search_terms(location)
+  local terms, seen = {}, {}
+  local function add(t)
+    t = trim(t)
+    if #t >= 3 and not seen[t:lower()] then
+      seen[t:lower()] = true
+      terms[#terms + 1] = t
+    end
+  end
+  local parts = {}
+  for part in (location .. '--'):gmatch '(.-)%-%-' do
+    for sub in (part .. ','):gmatch '([^,]*),' do
+      parts[#parts + 1] = sub
+    end
+  end
+  -- Most specific part (last) first
+  for i = #parts, 1, -1 do
+    add(parts[i])
+  end
+  return terms
+end
+
+-- Name search across all parts of the location; sites matching more parts
+-- (e.g. both "Utloppet" and "Hornborgasjön") rank first.
+local function suggest_by_name(location)
+  local terms = name_search_terms(location)
+  local found, order = {}, {}
+  for _, term in ipairs(terms) do
+    local hits = Sites.search_by_name(term)
+    for _, s in ipairs(hits or {}) do
+      if not found[s.id] then
+        found[s.id] = s
+        order[#order + 1] = s
+        s.rank = #order
+      end
+    end
+  end
+  for _, s in ipairs(order) do
+    local text = (s.lokalnamn .. ' ' .. s.huvudlokal):lower()
+    s.score = 0
+    for _, term in ipairs(terms) do
+      if text:find(term:lower(), 1, true) then
+        s.score = s.score + 1
+      end
+    end
+  end
+  table.sort(order, function(a, b)
+    if a.score ~= b.score then
+      return a.score > b.score
+    end
+    return a.rank < b.rank
+  end)
+  local out = {}
+  for i = 1, math.min(MAX_SUGGESTIONS, #order) do
+    out[i] = order[i]
+  end
+  return out
+end
+
+-- Ask the user how to map an unknown eBird location.
+-- Returns {lokalnamn, huvudlokal} to save, or nil to skip.
+local function choose_location(location, lat, lon)
+  print ''
+  print(("No mapping for location '%s'."):format(location))
+
+  local search_text = nil -- free-text name search typed by the user
+  while true do
+    local sites, err, heading
+    if search_text then
+      sites, err = Sites.search_by_name(search_text)
+      heading = ("Public Artportalen sites matching '%s':"):format(search_text)
+      if sites and #sites > MAX_SUGGESTIONS * 2 then
+        for i = #sites, MAX_SUGGESTIONS * 2 + 1, -1 do
+          sites[i] = nil
+        end
+      end
+    elseif lat and lon then
+      sites, err = Sites.nearest(lat, lon, MAX_SUGGESTIONS)
+      heading = ('Nearest public Artportalen sites to %.5f, %.5f:'):format(lat, lon)
+    else
+      sites, err = suggest_by_name(location)
+      heading = 'Public Artportalen sites with a similar name (no coordinates known):'
+    end
+
+    if not sites then
+      print('  Could not look up Artportalen sites: ' .. tostring(err))
+      sites = {}
+    elseif #sites == 0 then
+      print '  No matching Artportalen sites found.'
+    else
+      print(heading)
+      for i, s in ipairs(sites) do
+        local extra = {}
+        if s.region and s.region ~= '' then
+          extra[#extra + 1] = s.region
+        end
+        if s.dist_m then
+          extra[#extra + 1] = format_distance(s.dist_m)
+        end
+        print(
+          ('  %d) %s%s%s'):format(
+            i,
+            s.lokalnamn,
+            s.huvudlokal ~= '' and ('  [huvudlokal: ' .. s.huvudlokal .. ']') or '',
+            #extra > 0 and ('  (' .. table.concat(extra, ', ') .. ')') or ''
+          )
+        )
+      end
+    end
+    print '  m) enter Lokalnamn/Huvudlokal manually'
+    print '  s) skip (leave empty, ask again next run)'
+    print '  Or type coordinates "lat, lon" or a site name to search again.'
+    io.write 'Choice: '
+    local answer = trim(io.read '*l' or '')
+    local lower = answer:lower()
+
+    local n = tonumber(answer)
+    if n and sites[n] then
+      return { lokalnamn = sites[n].lokalnamn, huvudlokal = sites[n].huvudlokal }
+    elseif lower == '' or lower == 's' then
+      return nil
+    elseif lower == 'm' then
+      io.write(("Enter Lokalnamn for '%s' (blank to skip): "):format(location))
+      local ln = trim(io.read '*l' or '')
+      io.write(("Enter Huvudlokal for '%s' (blank for none): "):format(location))
+      local hl = trim(io.read '*l' or '')
+      if ln == '' and hl == '' then
+        return nil
+      end
+      return { lokalnamn = ln, huvudlokal = hl }
+    elseif n then
+      print '  Not one of the listed numbers.'
+    else
+      local clat, clon = Sites.parse_coords(answer)
+      if clat then
+        lat, lon, search_text = clat, clon, nil
+      else
+        search_text = answer
+      end
+    end
+  end
+end
+
 -- -------- Main --------
 
 local function main()
@@ -377,6 +565,9 @@ local function main()
   -- Stats
   local used_s, added_s = 0, 0
   local used_l, added_l = 0, 0
+
+  -- Locations skipped this run (not asked again for every row)
+  local skipped_locations = {}
 
   -- Output (header once)
   local fout = assert(io.open(output, 'w'), 'Cannot open output CSV')
@@ -433,6 +624,9 @@ local function main()
     local iDate = need 'Observation Date'
     local iStart = need 'Start Time'
     local iDur = need 'Duration'
+    -- Optional coordinate columns (not in eBird's own export)
+    local iLat = idx['Latitude']
+    local iLon = idx['Longitude']
 
     -- Rows
     for line in fin:lines() do
@@ -479,41 +673,44 @@ local function main()
         -- Location -> {lokalnamn, huvudlokal}
         local loc_obj = location ~= '' and location_mapper:get(location) or nil
 
-        if not loc_obj and location ~= '' then
-          io.write(
-            ("No mapping for location '%s'. Enter Lokalnamn (blank to skip): "):format(
-              location
-            )
-          )
-          local ln = trim(io.read '*l' or '')
-          io.write(
-            ("Enter Huvudlokal for '%s' (blank to skip): "):format(location)
-          )
-          local hl = trim(io.read '*l' or '')
-          if ln ~= '' or hl ~= '' then
-            local ok, err =
-              location_mapper:add(location, { lokalnamn = ln, huvudlokal = hl })
+        if not loc_obj and location ~= '' and not skipped_locations[location] then
+          -- Coordinates: optional Latitude/Longitude columns, else the
+          -- "lat, lon" at the end of eBird personal location names
+          local lat = iLat and tonumber(f[iLat])
+          local lon = iLon and tonumber(f[iLon])
+          if not (lat and lon) then
+            lat, lon = Sites.parse_coords(location:match '(%-?%d+%.%d+%s*,%s*%-?%d+%.%d+)%s*$')
+          end
+
+          local choice = choose_location(location, lat, lon)
+          if choice then
+            local ok, err = location_mapper:add(location, choice)
             if ok then
-              loc_obj = { lokalnamn = ln, huvudlokal = hl }
+              loc_obj = choice
               added_l = added_l + 1
+              print(
+                ("Saved '%s' -> %s / %s"):format(
+                  location,
+                  choice.lokalnamn,
+                  choice.huvudlokal
+                )
+              )
             else
               io.stderr:write('Location add failed: ' .. tostring(err) .. '\n')
             end
+          else
+            skipped_locations[location] = true
           end
-        else
-          if loc_obj then
-            -- Backward-compat: if old mappings.json had a plain string, migrate it.
-            if type(loc_obj) == 'string' then
-              loc_obj = { lokalnamn = loc_obj, huvudlokal = '' }
-              local ok, err = location_mapper:set(location, loc_obj)
-              if not ok then
-                io.stderr:write(
-                  'Location migrate failed: ' .. tostring(err) .. '\n'
-                )
-              end
+        elseif loc_obj then
+          -- Backward-compat: if old mappings.json had a plain string, migrate it.
+          if type(loc_obj) == 'string' then
+            loc_obj = { lokalnamn = loc_obj, huvudlokal = '' }
+            local ok, err = location_mapper:set(location, loc_obj)
+            if not ok then
+              io.stderr:write('Location migrate failed: ' .. tostring(err) .. '\n')
             end
-            used_l = used_l + 1
           end
+          used_l = used_l + 1
         end
 
         local lokal = (loc_obj and loc_obj.lokalnamn) or ''
@@ -521,10 +718,11 @@ local function main()
 
         -- Time math
         local mins = parse_duration_to_minutes(duration)
-        local sluttid = (starttime ~= '')
-            and add_minutes_to_time(starttime, mins)
-          or ''
-        local slutdatum = startdate
+        local sluttid, days_crossed = '', 0
+        if starttime ~= '' then
+          sluttid, days_crossed = add_minutes_to_time(starttime, mins)
+        end
+        local slutdatum = add_days_to_date(startdate, days_crossed)
 
         -- Output row
         write_csv_row(fout, {
