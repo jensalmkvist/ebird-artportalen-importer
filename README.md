@@ -40,10 +40,32 @@ tab-separated text (Windows), ready to paste straight into Excel.
    lua .\ebird_to_artportalen.lua '.\Import files\' .\out_for_excel.csv
    ```
 
-   or use `ebird_artportalen_importer.ps1`, which also switches the console to
-   UTF-8 so å/ä/ö display and input work. (Edit the input path in the script to
-   match your machine.)
+   or use `.\ebird_artportalen_importer.ps1`, which converts everything in
+   `Import files\` and also switches the console to UTF-8 so å/ä/ö display and
+   input work.
 3. Paste the clipboard into the Artportalen import template in Excel.
+
+### Download and convert by date
+
+With [ebird-checklist-scraper](https://github.com/jensalmkvist/ebird-checklist-scraper)
+cloned next to this repo (set up with its `.venv`, and `EBIRD_USERNAME` /
+`EBIRD_PASSWORD` set), the script can fetch your checklists from eBird first:
+
+```powershell
+.\ebird_artportalen_importer.ps1 -StartDate 2026-10-01                       # 1 Oct up to today
+.\ebird_artportalen_importer.ps1 -StartDate 2026-10-01 -EndDate 2026-10-15   # a date span
+.\ebird_artportalen_importer.ps1 -SinceLastImport                            # last import date up to today
+```
+
+The checklists are downloaded to a new folder in `Import files\` and only
+those are converted to `out_for_excel.csv` / the clipboard. `import_state.json`
+(not in git) remembers the last import date and every checklist ID imported,
+so overlapping dates never import a checklist twice; `-SinceLastImport` starts
+*on* the last import date to catch checklists entered later that day. On the
+first dated run, the `S…_observations.csv` files already in `Import files\`
+count as imported. If a download fails, the last import date isn't moved, so
+the next `-SinceLastImport` tries again. Use `-ScraperPath` if the scraper is
+somewhere else.
 
 ### Unknown species
 
