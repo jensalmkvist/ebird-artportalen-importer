@@ -148,6 +148,11 @@ function KeyValueMapper:get(csv_key)
   return self.map[csv_key]
 end
 
+--- Iterate all mappings: for csv_key, value in mapper:each() do ... end
+function KeyValueMapper:each()
+  return pairs(self.map)
+end
+
 --- Check if a key exists.
 function KeyValueMapper:exists_key(csv_key)
   csv_key = norm_str(csv_key)

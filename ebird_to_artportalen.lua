@@ -390,6 +390,35 @@ end
 
 -- Number of site suggestions to show for an unknown location
 local MAX_SUGGESTIONS = 5
+-- Your own sites (already used in mappings.json) shown above the public ones
+local MAX_OWN_SUGGESTIONS = 3
+local OWN_SITE_RADIUS_M = 5000
+
+-- string.lower only handles ASCII; also lowercase Å/Ä/Ö
+local function lower_sv(s)
+  return (tostring(s or ''):lower():gsub('Å', 'å'):gsub('Ä', 'ä'):gsub('Ö', 'ö'))
+end
+
+-- Coordinates at the end of eBird personal location names:
+-- "Lantmannavägen 4, Växjö SE-G (56.8681,14.8354)" or "... 58.32, 13.55"
+local COORDS_SUFFIX = '%(?(%-?%d+%.%d+%s*,%s*%-?%d+%.%d+)%)?%s*$'
+
+local function coords_from_name(name)
+  return Sites.parse_coords(tostring(name or ''):match(COORDS_SUFFIX))
+end
+
+local function strip_coords(name)
+  return (tostring(name or ''):gsub('%s*' .. COORDS_SUFFIX, ''))
+end
+
+-- Great-circle distance in metres
+local function distance_m(lat1, lon1, lat2, lon2)
+  local r = math.rad
+  local dlat, dlon = r(lat2 - lat1), r(lon2 - lon1)
+  local a = math.sin(dlat / 2) ^ 2
+    + math.cos(r(lat1)) * math.cos(r(lat2)) * math.sin(dlon / 2) ^ 2
+  return 6371000 * 2 * math.asin(math.sqrt(a))
+end
 
 local function format_distance(m)
   if not m then
@@ -413,7 +442,7 @@ local function name_search_terms(location)
     end
   end
   local parts = {}
-  for part in (location .. '--'):gmatch '(.-)%-%-' do
+  for part in (strip_coords(location) .. '--'):gmatch '(.-)%-%-' do
     for sub in (part .. ','):gmatch '([^,]*),' do
       parts[#parts + 1] = sub
     end
@@ -462,12 +491,105 @@ local function suggest_by_name(location)
   return out
 end
 
+-- Sites you have already mapped to, one per Lokalnamn/Huvudlokal. These
+-- include your private Artportalen sites, which the public lookup can't see.
+-- Coordinates come from the saved lat/lon or the eBird location name.
+local function own_sites(location_mapper)
+  local by_key, list = {}, {}
+  for ebird_name, v in location_mapper:each() do
+    if type(v) == 'table' and trim(v.lokalnamn) ~= '' then
+      local key = v.lokalnamn .. '\0' .. (v.huvudlokal or '')
+      local s = by_key[key]
+      if not s then
+        s = { lokalnamn = v.lokalnamn, huvudlokal = v.huvudlokal or '' }
+        by_key[key] = s
+        list[#list + 1] = s
+      end
+      if not s.lat then
+        local lat, lon = tonumber(v.lat), tonumber(v.lon)
+        if not (lat and lon) then
+          lat, lon = coords_from_name(ebird_name)
+        end
+        s.lat, s.lon = lat, lon
+      end
+    end
+  end
+  return list
+end
+
+-- True if a search term and the site's name contain one another
+-- ("Hemma Bråviksvägen" matches your site "Bråviksvägen" and vice versa).
+-- Huvudlokal is only searched when asked: a hotspot like "Tåkern--Glänås"
+-- would otherwise list every site you have under Tåkern.
+local function name_matches(site, terms, with_huvudlokal)
+  local lokal = lower_sv(site.lokalnamn)
+  local text = with_huvudlokal and (lokal .. ' ' .. lower_sv(site.huvudlokal)) or lokal
+  for _, t in ipairs(terms) do
+    t = lower_sv(t)
+    if text:find(t, 1, true) or (#lokal >= 3 and t:find(lokal, 1, true)) then
+      return true
+    end
+  end
+  return false
+end
+
+-- Own sites whose name matches first, then own sites near lat/lon.
+local function suggest_own(sites, terms, lat, lon, with_huvudlokal)
+  local named, near = {}, {}
+  for _, s in ipairs(sites) do
+    local d = lat and lon and s.lat and s.lon and distance_m(lat, lon, s.lat, s.lon)
+    if name_matches(s, terms, with_huvudlokal) then
+      named[#named + 1] = { site = s, dist = d }
+    elseif d and d <= OWN_SITE_RADIUS_M then
+      near[#near + 1] = { site = s, dist = d }
+    end
+  end
+  table.sort(named, function(a, b)
+    return a.site.lokalnamn < b.site.lokalnamn
+  end)
+  table.sort(near, function(a, b)
+    return a.dist < b.dist
+  end)
+  local out = {}
+  for _, group in ipairs { named, near } do
+    for _, e in ipairs(group) do
+      if #out < MAX_OWN_SUGGESTIONS then
+        out[#out + 1] = {
+          lokalnamn = e.site.lokalnamn,
+          huvudlokal = e.site.huvudlokal,
+          dist_m = e.dist,
+        }
+      end
+    end
+  end
+  return out
+end
+
+local function print_site(i, s)
+  local extra = {}
+  if s.region and s.region ~= '' then
+    extra[#extra + 1] = s.region
+  end
+  if s.dist_m then
+    extra[#extra + 1] = format_distance(s.dist_m)
+  end
+  print(
+    ('  %d) %s%s%s'):format(
+      i,
+      s.lokalnamn,
+      s.huvudlokal ~= '' and ('  [huvudlokal: ' .. s.huvudlokal .. ']') or '',
+      #extra > 0 and ('  (' .. table.concat(extra, ', ') .. ')') or ''
+    )
+  )
+end
+
 -- Ask the user how to map an unknown eBird location.
--- Returns {lokalnamn, huvudlokal} to save, or nil to skip.
-local function choose_location(location, lat, lon)
+-- Returns {lokalnamn, huvudlokal, lat, lon} to save, or nil to skip.
+local function choose_location(location, lat, lon, location_mapper)
   print ''
   print(("No mapping for location '%s'."):format(location))
 
+  local own = own_sites(location_mapper)
   local search_text = nil -- free-text name search typed by the user
   while true do
     local sites, err, heading
@@ -487,29 +609,37 @@ local function choose_location(location, lat, lon)
       heading = 'Public Artportalen sites with a similar name (no coordinates known):'
     end
 
+    local mine = suggest_own(
+      own,
+      search_text and { search_text } or name_search_terms(location),
+      lat,
+      lon,
+      search_text ~= nil
+    )
+    local choices = {}
+    if #mine > 0 then
+      print 'Your own sites (already used in mappings.json):'
+      for _, s in ipairs(mine) do
+        choices[#choices + 1] = s
+        print_site(#choices, s)
+      end
+    end
+
     if not sites then
       print('  Could not look up Artportalen sites: ' .. tostring(err))
-      sites = {}
     elseif #sites == 0 then
-      print '  No matching Artportalen sites found.'
+      print '  No matching public Artportalen sites found.'
     else
       print(heading)
-      for i, s in ipairs(sites) do
-        local extra = {}
-        if s.region and s.region ~= '' then
-          extra[#extra + 1] = s.region
+      for _, s in ipairs(sites) do
+        local dup = false
+        for _, m in ipairs(mine) do
+          dup = dup or (m.lokalnamn == s.lokalnamn and m.huvudlokal == s.huvudlokal)
         end
-        if s.dist_m then
-          extra[#extra + 1] = format_distance(s.dist_m)
+        if not dup then
+          choices[#choices + 1] = s
+          print_site(#choices, s)
         end
-        print(
-          ('  %d) %s%s%s'):format(
-            i,
-            s.lokalnamn,
-            s.huvudlokal ~= '' and ('  [huvudlokal: ' .. s.huvudlokal .. ']') or '',
-            #extra > 0 and ('  (' .. table.concat(extra, ', ') .. ')') or ''
-          )
-        )
       end
     end
     print '  m) enter Lokalnamn/Huvudlokal manually'
@@ -520,8 +650,13 @@ local function choose_location(location, lat, lon)
     local lower = answer:lower()
 
     local n = tonumber(answer)
-    if n and sites[n] then
-      return { lokalnamn = sites[n].lokalnamn, huvudlokal = sites[n].huvudlokal }
+    if n and choices[n] then
+      return {
+        lokalnamn = choices[n].lokalnamn,
+        huvudlokal = choices[n].huvudlokal,
+        lat = lat,
+        lon = lon,
+      }
     elseif lower == '' or lower == 's' then
       return nil
     elseif lower == 'm' then
@@ -532,7 +667,7 @@ local function choose_location(location, lat, lon)
       if ln == '' and hl == '' then
         return nil
       end
-      return { lokalnamn = ln, huvudlokal = hl }
+      return { lokalnamn = ln, huvudlokal = hl, lat = lat, lon = lon }
     elseif n then
       print '  Not one of the listed numbers.'
     else
@@ -679,16 +814,16 @@ local function main()
         -- Location -> {lokalnamn, huvudlokal}
         local loc_obj = location ~= '' and location_mapper:get(location) or nil
 
-        if not loc_obj and location ~= '' and not skipped_locations[location] then
-          -- Coordinates: optional Latitude/Longitude columns, else the
-          -- "lat, lon" at the end of eBird personal location names
-          local lat = iLat and tonumber(f[iLat])
-          local lon = iLon and tonumber(f[iLon])
-          if not (lat and lon) then
-            lat, lon = Sites.parse_coords(location:match '(%-?%d+%.%d+%s*,%s*%-?%d+%.%d+)%s*$')
-          end
+        -- Coordinates: optional Latitude/Longitude columns, else the
+        -- "lat, lon" at the end of eBird personal location names
+        local lat = iLat and tonumber(f[iLat])
+        local lon = iLon and tonumber(f[iLon])
+        if not (lat and lon) then
+          lat, lon = coords_from_name(location)
+        end
 
-          local choice = choose_location(location, lat, lon)
+        if not loc_obj and location ~= '' and not skipped_locations[location] then
+          local choice = choose_location(location, lat, lon, location_mapper)
           if choice then
             local ok, err = location_mapper:add(location, choice)
             if ok then
@@ -714,6 +849,14 @@ local function main()
             local ok, err = location_mapper:set(location, loc_obj)
             if not ok then
               io.stderr:write('Location migrate failed: ' .. tostring(err) .. '\n')
+            end
+          end
+          -- Remember coordinates so this site can be suggested near new locations
+          if lat and lon and loc_obj.lat == nil then
+            loc_obj.lat, loc_obj.lon = lat, lon
+            local ok, err = location_mapper:set(location, loc_obj)
+            if not ok then
+              io.stderr:write('Location update failed: ' .. tostring(err) .. '\n')
             end
           end
           used_l = used_l + 1

@@ -74,11 +74,19 @@ Choice:
 
 - **With coordinates** the nearest sites are shown with their distance.
   Coordinates come from optional `Latitude`/`Longitude` columns in the CSV, or
-  from the `lat, lon` that eBird puts at the end of personal location names.
+  from the `lat, lon` / `(lat,lon)` that eBird puts at the end of personal
+  location names.
 - **Without coordinates** (eBird hotspots) the site names are searched using
   the parts of the location name, e.g. `Hornborgasjön--Utloppet` searches for
   `Utloppet` and `Hornborgasjön`. Check the region shown, as names repeat
   across Sweden.
+- **Your own sites** are listed first. Private Artportalen sites can't be
+  looked up without logging in, so these come from the sites you've already
+  used in `mappings.json`: those whose Lokalnamn matches the location name
+  (`Hemma Bråviksvägen` finds `Bråviksvägen`), then those within 5 km. Their
+  coordinates come from the eBird location name or the `lat`/`lon` saved in
+  the mapping; the script adds `lat`/`lon` to a mapping whenever it sees the
+  location with coordinates.
 - At the prompt you can paste coordinates (e.g. from the eBird map) or type a
   site name to search again.
 - `s` (or blank) skips the location for the rest of the run; it is asked again
