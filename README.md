@@ -34,7 +34,7 @@ tab-separated text (Windows), ready to paste straight into Excel.
 1. Export your eBird checklists as CSV and put them in a folder, e.g.
    `Import files/`. The CSVs must have these columns:
    `Species, Count, Location, Observation Date, Start Time, Duration`.
-2. Run:
+2. Run (needs internet access for site suggestions):
 
    ```powershell
    lua .\ebird_to_artportalen.lua '.\Import files\' .\out_for_excel.csv
@@ -45,19 +45,52 @@ tab-separated text (Windows), ready to paste straight into Excel.
    match your machine.)
 3. Paste the clipboard into the Artportalen import template in Excel.
 
-### Unknown species and locations
+### Unknown species
 
-When a species or location isn't in the mapping files, the script asks you in
-the terminal:
+When a species isn't in `species_map.json`, the script asks in the terminal:
 
 ```
 No mapping for species 'stare (Sturnus vulgaris)'. Enter Artnamn (blank to skip):
-No mapping for location 'Trollskogen'. Enter Lokalnamn (blank to skip):
-Enter Huvudlokal for 'Trollskogen' (blank to skip):
 ```
 
-Your answers are saved immediately, so each species/location is only asked
-once, ever. Leaving the answer blank writes the row with that field empty.
+Your answer is saved immediately; blank writes the row with Artnamn empty.
+
+### Unknown locations: Artportalen site suggestions
+
+When a location isn't in `mappings.json`, the script looks up public
+Artportalen sites and lets you pick one by number:
+
+```
+No mapping for location 'Länsväg T 771, Grythyttan SE-Örebro län 59.63403, 14.76846'.
+Nearest public Artportalen sites to 59.63403, 14.76846:
+  1) Gungbromossen  [huvudlokal: Grythyttans sn]  (Hällefors, 346 m)
+  2) Bjurtjärnen (Moshyttan)  [huvudlokal: Järnboås sn]  (Nora, 765 m)
+  ...
+  m) enter Lokalnamn/Huvudlokal manually
+  s) skip (leave empty, ask again next run)
+  Or type coordinates "lat, lon" or a site name to search again.
+Choice:
+```
+
+- **With coordinates** the nearest sites are shown with their distance.
+  Coordinates come from optional `Latitude`/`Longitude` columns in the CSV, or
+  from the `lat, lon` that eBird puts at the end of personal location names.
+- **Without coordinates** (eBird hotspots) the site names are searched using
+  the parts of the location name, e.g. `Hornborgasjön--Utloppet` searches for
+  `Utloppet` and `Hornborgasjön`. Check the region shown, as names repeat
+  across Sweden.
+- At the prompt you can paste coordinates (e.g. from the eBird map) or type a
+  site name to search again.
+- `s` (or blank) skips the location for the rest of the run; it is asked again
+  next time.
+
+Your choice is saved to `mappings.json` immediately, so each location is only
+asked once, ever. The lookup needs `curl` (built into Windows 10+) and
+internet access; if it fails you can still use `m` to type the names.
+
+It uses the same unauthenticated endpoints as Artportalen's public "Sök fynd"
+page (`/ViewSighting/GetSelectableSitesAsMapGeoJsonSites` and
+`/ViewSighting/FindSitesByName`). They are not a documented API and may change.
 
 ## Mapping files
 
@@ -86,6 +119,7 @@ fresh empty mapping is started.
 |------|---------|
 | `ebird_to_artportalen.lua` | Main conversion script |
 | `KeyValueMapper.lua` | Small JSON-backed key → value store used for the mappings |
+| `ArtportalenSites.lua` | Looks up public Artportalen sites (nearest / by name) |
 | `ebird_artportalen_importer.ps1` | Windows launcher (UTF-8 console + run) |
 | `species_map.json`, `mappings.json` | Your accumulated species/location mappings |
 
